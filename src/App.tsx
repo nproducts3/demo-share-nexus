@@ -1,50 +1,46 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
-import { NotificationsProvider } from "./contexts/NotificationsContext";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import Index from "./pages/Index";
-import DemoSessions from "./pages/DemoSessions";
-import UserManagement from "./pages/UserManagement";
-import Analytics from "./pages/Analytics";
-import Settings from "./pages/Settings";
-import Notifications from "./pages/Notifications";
-import MySessions from "./pages/MySessions";
-import MyProgress from "./pages/MyProgress";
-import NotFound from "./pages/NotFound";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { AdminProvider } from './contexts/AdminContext';
+import { NotificationsProvider } from './contexts/NotificationsContext';
+import { Toaster } from '@/components/ui/toaster';
+import Index from './pages/Index';
+import DemoSessions from './pages/DemoSessions';
+import UserManagement from './pages/UserManagement';
+import Analytics from './pages/Analytics';
+import Settings from './pages/Settings';
+import MySessions from './pages/MySessions';
+import MyProgress from './pages/MyProgress';
+import Notifications from './pages/Notifications';
+import NotFound from './pages/NotFound';
+import './App.css';
 
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <Toaster />
-    <Sonner />
+function App() {
+  return (
     <AuthProvider>
-      <NotificationsProvider>
-        <BrowserRouter>
-          <SidebarProvider defaultOpen={true}>
-            <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-slate-100">
+      <AdminProvider>
+        <NotificationsProvider>
+          <Router>
+            <div className="min-h-screen bg-gray-50">
               <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/sessions" element={<DemoSessions />} />
-                <Route path="/users" element={<UserManagement />} />
+                <Route path="/demo-sessions" element={<DemoSessions />} />
+                <Route path="/user-management" element={<UserManagement />} />
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/settings" element={<Settings />} />
-                <Route path="/notifications" element={<Notifications />} />
                 <Route path="/my-sessions" element={<MySessions />} />
-                <Route path="/progress" element={<MyProgress />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="/my-progress" element={<MyProgress />} />
+                <Route path="/notifications" element={<Notifications />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <Toaster />
             </div>
-          </SidebarProvider>
-        </BrowserRouter>
-      </NotificationsProvider>
+          </Router>
+        </NotificationsProvider>
+      </AdminProvider>
     </AuthProvider>
-  </QueryClientProvider>
-);
+  );
+}
 
 export default App;

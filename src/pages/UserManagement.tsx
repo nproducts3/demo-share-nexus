@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Users, Plus, Search, UserCheck, UserX, Mail, Phone, Calendar, Edit, Trash2, Shield, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -181,19 +180,31 @@ const UserManagement = () => {
 
   const handleEditUser = (userId: string) => {
     const user = users.find(u => u.id === userId);
-    toast({
-      title: "Edit User",
-      description: `Opening editor for ${user?.name}`,
-    });
+    if (user) {
+      // In a real app, this would open an edit modal with form fields
+      const newName = prompt('Edit user name:', user.name);
+      if (newName && newName !== user.name) {
+        setUsers(prev => prev.map(u => 
+          u.id === userId ? { ...u, name: newName } : u
+        ));
+        toast({
+          title: "User Updated",
+          description: `User "${user.name}" has been updated to "${newName}".`,
+        });
+      }
+    }
   };
 
   const handleDeleteUser = (userId: string) => {
     const user = users.find(u => u.id === userId);
-    setUsers(prev => prev.filter(u => u.id !== userId));
-    toast({
-      title: "User Deleted",
-      description: `${user?.name} has been removed from the system.`,
-    });
+    if (user && confirm(`Are you sure you want to delete user "${user.name}"?`)) {
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      toast({
+        title: "User Deleted",
+        description: `User "${user.name}" has been removed from the system.`,
+        variant: "destructive"
+      });
+    }
   };
 
   const clearAllFilters = () => {

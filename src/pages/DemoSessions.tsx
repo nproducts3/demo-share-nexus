@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Calendar, Clock, Users, Plus, Search, Download, Trash2, Edit, Eye, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -206,27 +205,42 @@ const DemoSessions = () => {
 
   const handleEditSession = (sessionId: string) => {
     const session = demoSessions.find(s => s.id === sessionId);
-    toast({
-      title: "Edit Session",
-      description: `Opening editor for "${session?.title}"`,
-    });
+    if (session) {
+      // In a real app, this would open an edit modal with pre-filled data
+      const updatedTitle = prompt('Edit session title:', session.title);
+      if (updatedTitle && updatedTitle !== session.title) {
+        setDemoSessions(prev => prev.map(s => 
+          s.id === sessionId ? { ...s, title: updatedTitle } : s
+        ));
+        toast({
+          title: "Session Updated",
+          description: `"${session.title}" has been updated to "${updatedTitle}".`,
+        });
+      }
+    }
   };
 
   const handleDeleteSession = (sessionId: string) => {
     const session = demoSessions.find(s => s.id === sessionId);
-    setDemoSessions(prev => prev.filter(s => s.id !== sessionId));
-    toast({
-      title: "Session Deleted",
-      description: `"${session?.title}" has been deleted.`,
-    });
+    if (session && confirm(`Are you sure you want to delete "${session.title}"?`)) {
+      setDemoSessions(prev => prev.filter(s => s.id !== sessionId));
+      toast({
+        title: "Session Deleted",
+        description: `"${session.title}" has been deleted successfully.`,
+        variant: "destructive"
+      });
+    }
   };
 
   const handleViewSession = (sessionId: string) => {
     const session = demoSessions.find(s => s.id === sessionId);
-    toast({
-      title: "View Session",
-      description: `Opening details for "${session?.title}"`,
-    });
+    if (session) {
+      // Create a detailed view modal or navigate to session details
+      toast({
+        title: "Session Details",
+        description: `Viewing "${session.title}" - ${session.technology} session on ${new Date(session.date).toLocaleDateString()} at ${session.time}. Location: ${session.location}`,
+      });
+    }
   };
 
   const exportSessions = () => {

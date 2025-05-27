@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Layout } from '../components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,26 +14,63 @@ import {
   DollarSign,
   Activity,
   Download,
-  Filter,
   RefreshCw
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
+import { useToast } from '@/hooks/use-toast';
 
 const Analytics = () => {
+  const { toast } = useToast();
   const [timeRange, setTimeRange] = useState('7d');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Mock data for charts
-  const performanceData = [
-    { name: 'Mon', sessions: 45, conversion: 32, revenue: 2400 },
-    { name: 'Tue', sessions: 52, conversion: 28, revenue: 2800 },
-    { name: 'Wed', sessions: 48, conversion: 35, revenue: 3200 },
-    { name: 'Thu', sessions: 61, conversion: 42, revenue: 3800 },
-    { name: 'Fri', sessions: 55, conversion: 38, revenue: 3400 },
-    { name: 'Sat', sessions: 67, conversion: 45, revenue: 4200 },
-    { name: 'Sun', sessions: 58, conversion: 40, revenue: 3600 },
-  ];
+  // Generate different data based on time range
+  const getPerformanceData = (range: string) => {
+    const baseData = {
+      '7d': [
+        { name: 'Mon', sessions: 45, conversion: 32, revenue: 2400 },
+        { name: 'Tue', sessions: 52, conversion: 28, revenue: 2800 },
+        { name: 'Wed', sessions: 48, conversion: 35, revenue: 3200 },
+        { name: 'Thu', sessions: 61, conversion: 42, revenue: 3800 },
+        { name: 'Fri', sessions: 55, conversion: 38, revenue: 3400 },
+        { name: 'Sat', sessions: 67, conversion: 45, revenue: 4200 },
+        { name: 'Sun', sessions: 58, conversion: 40, revenue: 3600 },
+      ],
+      '30d': [
+        { name: 'Week 1', sessions: 312, conversion: 35, revenue: 18500 },
+        { name: 'Week 2', sessions: 298, conversion: 42, revenue: 21200 },
+        { name: 'Week 3', sessions: 356, conversion: 38, revenue: 19800 },
+        { name: 'Week 4', sessions: 387, conversion: 45, revenue: 23400 },
+      ],
+      '90d': [
+        { name: 'Month 1', sessions: 1250, conversion: 38, revenue: 75000 },
+        { name: 'Month 2', sessions: 1380, conversion: 42, revenue: 82800 },
+        { name: 'Month 3', sessions: 1456, conversion: 45, revenue: 87360 },
+      ],
+      '1y': [
+        { name: 'Q1', sessions: 4200, conversion: 38, revenue: 252000 },
+        { name: 'Q2', sessions: 4650, conversion: 42, revenue: 279000 },
+        { name: 'Q3', sessions: 5100, conversion: 45, revenue: 306000 },
+        { name: 'Q4', sessions: 5400, conversion: 48, revenue: 324000 },
+      ]
+    };
+    return baseData[range as keyof typeof baseData] || baseData['7d'];
+  };
 
+  const getMetrics = (range: string) => {
+    const metricsData = {
+      '7d': { sessions: '386', users: '1,429', avgTime: '24m 32s', conversion: '34.8%' },
+      '30d': { sessions: '1,653', users: '5,247', avgTime: '26m 45s', conversion: '40.2%' },
+      '90d': { sessions: '4,986', users: '14,832', avgTime: '28m 12s', conversion: '41.7%' },
+      '1y': { sessions: '19,350', users: '52,680', avgTime: '29m 38s', conversion: '43.3%' }
+    };
+    return metricsData[range as keyof typeof metricsData] || metricsData['7d'];
+  };
+
+  const performanceData = getPerformanceData(timeRange);
+  const currentMetrics = getMetrics(timeRange);
+
+  // Mock data for charts
   const demoTypeData = [
     { name: 'Product Demo', value: 45, color: '#3b82f6' },
     { name: 'Sales Demo', value: 30, color: '#10b981' },
@@ -54,7 +90,7 @@ const Analytics = () => {
   const metrics = [
     {
       title: 'Total Sessions',
-      value: '2,847',
+      value: currentMetrics.sessions,
       change: '+12.5%',
       trend: 'up',
       icon: Calendar,
@@ -63,7 +99,7 @@ const Analytics = () => {
     },
     {
       title: 'Active Users',
-      value: '1,429',
+      value: currentMetrics.users,
       change: '+8.2%',
       trend: 'up',
       icon: Users,
@@ -72,7 +108,7 @@ const Analytics = () => {
     },
     {
       title: 'Avg Session Time',
-      value: '24m 32s',
+      value: currentMetrics.avgTime,
       change: '-2.1%',
       trend: 'down',
       icon: Clock,
@@ -81,7 +117,7 @@ const Analytics = () => {
     },
     {
       title: 'Conversion Rate',
-      value: '34.8%',
+      value: currentMetrics.conversion,
       change: '+5.4%',
       trend: 'up',
       icon: Target,
@@ -92,14 +128,52 @@ const Analytics = () => {
 
   const handleRefresh = async () => {
     setIsLoading(true);
+    toast({
+      title: "Refreshing Data",
+      description: "Updating analytics data...",
+    });
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1500));
     setIsLoading(false);
+    toast({
+      title: "Data Refreshed",
+      description: "Analytics data has been updated successfully.",
+    });
   };
 
   const handleExport = () => {
-    // Simulate export functionality
-    console.log('Exporting analytics data...');
+    toast({
+      title: "Exporting Data",
+      description: `Exporting ${timeRange} analytics data to CSV...`,
+    });
+    
+    // Create CSV content based on current data
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      "Period,Sessions,Conversion Rate,Revenue\n" +
+      performanceData.map(row => 
+        `"${row.name}","${row.sessions}","${row.conversion}%","$${row.revenue}"`
+      ).join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `analytics_${timeRange}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Export Complete",
+      description: `Analytics data for ${timeRange} exported successfully.`,
+    });
+  };
+
+  const handleTimeRangeChange = (range: string) => {
+    setTimeRange(range);
+    toast({
+      title: "Time Range Updated",
+      description: `Showing data for ${range}`,
+    });
   };
 
   return (
@@ -123,7 +197,7 @@ const Analytics = () => {
                   key={range}
                   variant={timeRange === range ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setTimeRange(range)}
+                  onClick={() => handleTimeRangeChange(range)}
                   className="text-xs"
                 >
                   {range}
@@ -148,11 +222,6 @@ const Analytics = () => {
             >
               <Download className="h-4 w-4 mr-2" />
               Export
-            </Button>
-            
-            <Button size="sm">
-              <Filter className="h-4 w-4 mr-2" />
-              Filters
             </Button>
           </div>
         </div>
@@ -195,7 +264,7 @@ const Analytics = () => {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
-                Performance Trends
+                Performance Trends ({timeRange})
               </CardTitle>
               <CardDescription>
                 Session volume and conversion rates over time
