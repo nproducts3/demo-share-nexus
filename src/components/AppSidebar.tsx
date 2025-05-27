@@ -1,43 +1,21 @@
 
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Calendar, Users, User, Home, BarChart3, Settings, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Calendar, Users, User, Home, BarChart3, Settings } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { toast } from '@/hooks/use-toast';
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
 } from '@/components/ui/sidebar';
 
 export const AppSidebar: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
-  const handleLogout = () => {
-    try {
-      logout();
-      toast({
-        title: "Logged out successfully",
-        description: "You have been logged out of your account.",
-      });
-    } catch (error) {
-      console.error('Logout error:', error);
-      toast({
-        title: "Logout failed",
-        description: "There was an error logging out. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const adminMenuItems = [
     { icon: Home, label: 'Dashboard', href: '/' },
@@ -98,31 +76,6 @@ export const AppSidebar: React.FC = () => {
           ))}
         </SidebarMenu>
       </SidebarContent>
-
-      <SidebarSeparator className="mx-4 bg-slate-200/60" />
-
-      <SidebarFooter className="p-4 bg-gradient-to-t from-slate-50/50 to-white">
-        <div className="flex items-center space-x-3 p-4 rounded-xl bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200/60 shadow-sm">
-          <Avatar className="h-11 w-11 border-2 border-white shadow-md ring-1 ring-slate-200/50">
-            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-semibold text-sm">
-              {user?.name?.charAt(0) || 'U'}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-900 truncate">{user?.name}</p>
-            <p className="text-xs text-slate-500 capitalize font-medium mt-0.5">{user?.role}</p>
-          </div>
-        </div>
-        
-        <Button 
-          variant="outline" 
-          onClick={handleLogout}
-          className="w-full mt-3 border-slate-200 hover:bg-red-50 hover:border-red-200 hover:text-red-700 transition-all duration-200 font-medium"
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          Logout
-        </Button>
-      </SidebarFooter>
     </Sidebar>
   );
 };
