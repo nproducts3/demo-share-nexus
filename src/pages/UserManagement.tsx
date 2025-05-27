@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Users, Plus, Search, Filter, UserCheck, UserX, Mail, Phone, Calendar, Edit, Trash2, Shield, Award } from 'lucide-react';
+import { Users, Plus, Search, UserCheck, UserX, Mail, Phone, Calendar, Edit, Trash2, Shield, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Layout } from '../components/Layout';
+import { useToast } from '@/hooks/use-toast';
 
 interface User {
   id: string;
@@ -30,12 +31,14 @@ interface User {
 }
 
 const UserManagement = () => {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
+  const [skillLevelFilter, setSkillLevelFilter] = useState('all');
 
-  const users: User[] = [
+  const [users, setUsers] = useState<User[]>([
     {
       id: '1',
       name: 'John Admin',
@@ -94,19 +97,51 @@ const UserManagement = () => {
       sessionsCreated: 1,
       totalHours: 20,
       skillLevel: 'Beginner'
+    },
+    {
+      id: '5',
+      name: 'Sarah Johnson',
+      email: 'sarah@demo.com',
+      role: 'employee',
+      status: 'pending',
+      joinDate: '2024-01-01',
+      lastLogin: '2024-01-01',
+      department: 'Marketing',
+      sessionsAttended: 0,
+      sessionsCreated: 0,
+      totalHours: 0,
+      skillLevel: 'Beginner',
+      phone: '+1 (555) 111-2222'
+    },
+    {
+      id: '6',
+      name: 'Mike Davis',
+      email: 'mike@demo.com',
+      role: 'admin',
+      status: 'active',
+      joinDate: '2023-02-20',
+      lastLogin: '2024-01-09',
+      department: 'Operations',
+      sessionsAttended: 18,
+      sessionsCreated: 8,
+      totalHours: 85,
+      skillLevel: 'Advanced',
+      phone: '+1 (555) 333-4444'
     }
-  ];
+  ]);
 
   const departments = Array.from(new Set(users.map(user => user.department)));
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
+                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.department.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
     const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
     const matchesDepartment = departmentFilter === 'all' || user.department === departmentFilter;
+    const matchesSkillLevel = skillLevelFilter === 'all' || user.skillLevel === skillLevelFilter;
     
-    return matchesSearch && matchesRole && matchesStatus && matchesDepartment;
+    return matchesSearch && matchesRole && matchesStatus && matchesDepartment && matchesSkillLevel;
   });
 
   const getStatusBadge = (status: string) => {
@@ -144,10 +179,35 @@ const UserManagement = () => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
+  const handleEditUser = (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    toast({
+      title: "Edit User",
+      description: `Opening editor for ${user?.name}`,
+    });
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    setUsers(prev => prev.filter(u => u.id !== userId));
+    toast({
+      title: "User Deleted",
+      description: `${user?.name} has been removed from the system.`,
+    });
+  };
+
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setRoleFilter('all');
+    setStatusFilter('all');
+    setDepartmentFilter('all');
+    setSkillLevelFilter('all');
+  };
+
   const totalUsers = users.length;
   const activeUsers = users.filter(u => u.status === 'active').length;
   const adminUsers = users.filter(u => u.role === 'admin').length;
-  const avgSessionsPerUser = Math.round(users.reduce((sum, u) => sum + u.sessionsAttended, 0) / users.length);
+  const avgSessionsPerUser = users.length > 0 ? Math.round(users.reduce((sum, u) => sum + u.sessionsAttended, 0) / users.length) : 0;
 
   return (
     <Layout>
@@ -220,18 +280,23 @@ const UserManagement = () => {
           </TabsList>
 
           <TabsContent value="users" className="space-y-6">
-            {/* Filters */}
+            {/* Integrated Filters */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Filters & Search</CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-lg">Search & Filter Users</CardTitle>
+                  <Button variant="outline" size="sm" onClick={clearAllFilters}>
+                    Clear All
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-4">
-                  <div className="flex-1 min-w-[200px]">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                  <div className="lg:col-span-2">
                     <div className="relative">
                       <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
                       <Input
-                        placeholder="Search users..."
+                        placeholder="Search users, email, or department..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="pl-10"
@@ -239,8 +304,8 @@ const UserManagement = () => {
                     </div>
                   </div>
                   <Select value={roleFilter} onValueChange={setRoleFilter}>
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue placeholder="Role" />
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Roles" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Roles</SelectItem>
@@ -249,8 +314,8 @@ const UserManagement = () => {
                     </SelectContent>
                   </Select>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue placeholder="Status" />
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Status" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Status</SelectItem>
@@ -260,14 +325,25 @@ const UserManagement = () => {
                     </SelectContent>
                   </Select>
                   <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Department" />
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Departments" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Departments</SelectItem>
                       {departments.map(dept => (
                         <SelectItem key={dept} value={dept}>{dept}</SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={skillLevelFilter} onValueChange={setSkillLevelFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Levels" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Levels</SelectItem>
+                      <SelectItem value="Beginner">Beginner</SelectItem>
+                      <SelectItem value="Intermediate">Intermediate</SelectItem>
+                      <SelectItem value="Advanced">Advanced</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -336,10 +412,20 @@ const UserManagement = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-1">
-                            <Button size="sm" variant="outline" className="h-8 w-8 p-0">
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="h-8 w-8 p-0"
+                              onClick={() => handleEditUser(user.id)}
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" variant="outline" className="h-8 w-8 p-0 text-red-600">
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                              onClick={() => handleDeleteUser(user.id)}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
