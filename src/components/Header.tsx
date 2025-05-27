@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Bell, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { NotificationsPopup } from './NotificationsPopup';
 
 export const Header: React.FC = () => {
   const { user } = useAuth();
@@ -33,14 +33,7 @@ export const Header: React.FC = () => {
             />
           </div>
           
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="relative border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
-          >
-            <Bell className="h-4 w-4" />
-            <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white"></span>
-          </Button>
+          <NotificationsPopup />
         </div>
       </div>
     </header>
