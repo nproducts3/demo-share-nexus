@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Calendar, Users, User, Home, BarChart3, Settings, PanelLeftClose } from 'lucide-react';
+import { Calendar, Users, User, Home, BarChart3, Settings, PanelLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Sidebar,
@@ -36,45 +36,47 @@ export const AppSidebar: React.FC = () => {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-slate-200/60 bg-white shadow-sm">
-      <SidebarHeader className="border-b border-slate-200/60 p-6 bg-gradient-to-r from-slate-50 to-white">
+      <SidebarHeader className="border-b border-slate-200/60 p-4 bg-gradient-to-r from-slate-50 to-white">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3 group-data-[collapsible=icon]:justify-center">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg ring-1 ring-blue-600/20">
-              <Calendar className="h-5 w-5 text-white" />
+          <div className="flex items-center space-x-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:space-x-0">
+            <div className="w-8 h-8 group-data-[collapsible=icon]:w-6 group-data-[collapsible=icon]:h-6 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-lg flex items-center justify-center shadow-lg ring-1 ring-blue-600/20 transition-all duration-200">
+              <Calendar className="h-4 w-4 group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3 text-white" />
             </div>
             <div className="group-data-[collapsible=icon]:hidden">
-              <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 bg-clip-text text-transparent">
+              <h1 className="text-lg font-bold bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 bg-clip-text text-transparent">
                 Demo Tracker
               </h1>
               <p className="text-xs text-slate-500 font-medium mt-0.5">Knowledge Sharing Platform</p>
             </div>
           </div>
-          <SidebarTrigger className="h-8 w-8 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors" />
+          <SidebarTrigger className="h-6 w-6 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors flex-shrink-0">
+            <PanelLeft className="h-4 w-4" />
+          </SidebarTrigger>
         </div>
       </SidebarHeader>
       
-      <SidebarContent className="p-4 bg-gradient-to-b from-white to-slate-50/30">
-        <SidebarMenu className="space-y-2">
+      <SidebarContent className="p-2 bg-gradient-to-b from-white to-slate-50/30">
+        <SidebarMenu className="space-y-1">
           {menuItems.map((item, index) => (
             <SidebarMenuItem key={index}>
               <SidebarMenuButton
                 onClick={() => navigate(item.href)}
                 isActive={location.pathname === item.href}
                 tooltip={item.label}
-                className={`w-full justify-start px-4 py-3.5 rounded-xl transition-all duration-300 group relative overflow-hidden ${
+                className={`w-full justify-start px-3 py-2.5 rounded-lg transition-all duration-300 group relative overflow-hidden group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2 ${
                   location.pathname === item.href
                     ? 'bg-gradient-to-r from-blue-50 via-blue-50 to-indigo-50 text-blue-700 border border-blue-200/50 shadow-md hover:shadow-lg'
                     : 'text-slate-700 hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 hover:text-slate-900 border border-transparent hover:border-slate-200/50'
                 }`}
               >
-                <div className="flex items-center space-x-3 relative z-10">
-                  <item.icon className={`h-5 w-5 transition-all duration-300 group-hover:scale-110 ${
+                <div className="flex items-center space-x-3 relative z-10 group-data-[collapsible=icon]:space-x-0 group-data-[collapsible=icon]:justify-center">
+                  <item.icon className={`h-4 w-4 transition-all duration-300 group-hover:scale-110 flex-shrink-0 ${
                     location.pathname === item.href ? 'text-blue-600' : 'text-slate-500 group-hover:text-slate-700'
                   }`} />
                   <span className="font-medium group-data-[collapsible=icon]:hidden">{item.label}</span>
                 </div>
                 {location.pathname === item.href && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-indigo-500/5 rounded-xl" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-indigo-500/5 rounded-lg" />
                 )}
               </SidebarMenuButton>
             </SidebarMenuItem>
