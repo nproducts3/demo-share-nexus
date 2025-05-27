@@ -1,9 +1,7 @@
 
 import React, { useState } from 'react';
-import { Calendar, Users, Clock, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DemoSessionModal } from './DemoSessionModal';
+import { Calendar, Users, Clock } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { DemoSessionCard } from './DemoSessionCard';
 
 interface DemoSession {
@@ -19,8 +17,6 @@ interface DemoSession {
 }
 
 export const AdminDashboard: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingSession, setEditingSession] = useState<DemoSession | undefined>();
   const [demoSessions, setDemoSessions] = useState<DemoSession[]>([
     {
       id: '1',
@@ -46,37 +42,8 @@ export const AdminDashboard: React.FC = () => {
     }
   ]);
 
-  const handleCreateSession = (sessionData: Omit<DemoSession, 'id' | 'createdBy' | 'attendees' | 'status'>) => {
-    const newSession: DemoSession = {
-      ...sessionData,
-      id: Date.now().toString(),
-      createdBy: 'John Admin',
-      attendees: 0,
-      status: 'upcoming'
-    };
-    setDemoSessions(prev => [...prev, newSession]);
-    setIsModalOpen(false);
-  };
-
-  const handleEditSession = (sessionData: Omit<DemoSession, 'id' | 'createdBy' | 'attendees' | 'status'>) => {
-    if (editingSession) {
-      setDemoSessions(prev => prev.map(session => 
-        session.id === editingSession.id 
-          ? { ...session, ...sessionData }
-          : session
-      ));
-      setEditingSession(undefined);
-      setIsModalOpen(false);
-    }
-  };
-
   const handleDeleteSession = (sessionId: string) => {
     setDemoSessions(prev => prev.filter(session => session.id !== sessionId));
-  };
-
-  const openEditModal = (session: DemoSession) => {
-    setEditingSession(session);
-    setIsModalOpen(true);
   };
 
   const statsCards = [
@@ -89,10 +56,6 @@ export const AdminDashboard: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Demo Session Management</h1>
-        <Button onClick={() => setIsModalOpen(true)} className="flex items-center space-x-2">
-          <Plus className="h-4 w-4" />
-          <span>Create Session</span>
-        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -122,24 +85,13 @@ export const AdminDashboard: React.FC = () => {
             <DemoSessionCard
               key={session.id}
               session={session}
-              onEdit={openEditModal}
+              onEdit={() => {}}
               onDelete={handleDeleteSession}
               isAdmin={true}
             />
           ))}
         </div>
       </div>
-
-      {/* Modal */}
-      <DemoSessionModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingSession(undefined);
-        }}
-        onSubmit={editingSession ? handleEditSession : handleCreateSession}
-        editingSession={editingSession}
-      />
     </div>
   );
 };
