@@ -91,8 +91,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       {/* Header */}
-      <header className="border-b border-slate-200/60 bg-white/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+      <header className="border-b border-slate-200/60 bg-white/80 backdrop-blur-xl sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
@@ -105,8 +105,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
                 <p className="text-xs text-slate-500 font-medium">Knowledge Sharing Platform</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" onClick={onLoginClick}>
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <Button variant="outline" onClick={onLoginClick} className="hidden sm:inline-flex">
                 Sign In
               </Button>
               <Button onClick={onLoginClick} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
@@ -118,25 +118,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
       </header>
 
       {/* Hero Section */}
-      <section className="pt-20 pb-16">
-        <div className="max-w-7xl mx-auto px-6 text-center">
+      <section className="pt-16 sm:pt-20 pb-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-5xl lg:text-6xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent mb-6">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent mb-6 leading-tight">
               Transform Your Demo Experience
             </h1>
-            <p className="text-xl text-slate-600 mb-8 leading-relaxed">
+            <p className="text-lg sm:text-xl text-slate-600 mb-8 leading-relaxed max-w-3xl mx-auto">
               Empower your team with intelligent demo scheduling, advanced analytics, and seamless knowledge sharing. 
               The all-in-one platform for modern demo management.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button 
                 size="lg" 
                 onClick={onLoginClick}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-lg px-8 py-6"
+                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-lg px-8 py-6"
               >
                 Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button variant="outline" size="lg" className="text-lg px-8 py-6">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg px-8 py-6">
                 Watch Demo
               </Button>
             </div>
@@ -145,18 +145,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-white/50">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-slate-900 mb-4">Premium Features</h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+      <section className="py-16 sm:py-20 bg-white/50 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">Premium Features</h2>
+            <p className="text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto">
               Discover the powerful features that make Demo Tracker the preferred choice for enterprise teams worldwide.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
             {features.map((feature, index) => (
-              <Card key={index} className="border-slate-200/60 hover:shadow-lg transition-all duration-300 group">
-                <CardHeader>
+              <Card key={index} className="border-slate-200/60 hover:shadow-lg transition-all duration-300 group h-full">
+                <CardHeader className="pb-4">
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <feature.icon className="h-6 w-6 text-blue-600" />
                   </div>
@@ -174,19 +174,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-slate-900 mb-4">Choose Your Plan</h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+      <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">Choose Your Plan</h2>
+            <p className="text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto">
               Flexible pricing options designed to scale with your team's needs.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid gap-6 sm:gap-8 lg:grid-cols-3">
             {pricingPlans.map((plan, index) => (
-              <Card key={index} className={`relative border-2 transition-all duration-300 hover:shadow-xl ${
+              <Card key={index} className={`relative border-2 transition-all duration-300 hover:shadow-xl h-full ${
                 plan.highlighted 
-                  ? 'border-blue-500 shadow-lg scale-105' 
+                  ? 'border-blue-500 shadow-lg lg:scale-105' 
                   : 'border-slate-200/60 hover:border-blue-300'
               }`}>
                 {plan.highlighted && (
@@ -196,20 +196,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
                     </span>
                   </div>
                 )}
-                <CardHeader className="text-center">
+                <CardHeader className="text-center pb-4">
                   <CardTitle className="text-2xl text-slate-900">{plan.name}</CardTitle>
                   <div className="flex items-baseline justify-center mt-4">
-                    <span className="text-4xl font-bold text-slate-900">{plan.price}</span>
+                    <span className="text-3xl sm:text-4xl font-bold text-slate-900">{plan.price}</span>
                     <span className="text-slate-600 ml-1">{plan.period}</span>
                   </div>
                   <CardDescription className="mt-4">{plan.description}</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <ul className="space-y-3">
+                <CardContent className="space-y-4 flex-1 flex flex-col">
+                  <ul className="space-y-3 flex-1">
                     {plan.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center">
-                        <Check className="h-5 w-5 text-green-600 mr-3 flex-shrink-0" />
-                        <span className="text-slate-700">{feature}</span>
+                      <li key={featureIndex} className="flex items-start">
+                        <Check className="h-5 w-5 text-green-600 mr-3 flex-shrink-0 mt-0.5" />
+                        <span className="text-slate-700 text-sm">{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -232,18 +232,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-4xl font-bold text-white mb-6">
+      <section className="py-16 sm:py-20 bg-gradient-to-r from-blue-600 to-indigo-600 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
             Ready to Transform Your Demo Process?
           </h2>
-          <p className="text-xl text-blue-100 mb-8">
+          <p className="text-lg sm:text-xl text-blue-100 mb-8">
             Join thousands of teams who have already streamlined their demo workflows with Demo Tracker.
           </p>
           <Button 
             size="lg" 
             onClick={onLoginClick}
-            className="bg-white text-blue-600 hover:bg-blue-50 text-lg px-8 py-6"
+            className="w-full sm:w-auto bg-white text-blue-600 hover:bg-blue-50 text-lg px-8 py-6"
           >
             Start Your Free Trial Today
           </Button>
@@ -251,8 +251,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-300 py-12">
-        <div className="max-w-7xl mx-auto px-6">
+      <footer className="bg-slate-900 text-slate-300 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center space-x-3 mb-8">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
               <Calendar className="h-4 w-4 text-white" />
