@@ -19,11 +19,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <>
       <AppSidebar />
-      <SidebarInset className="flex-1">
+      <SidebarInset className="flex-1 flex flex-col min-h-screen">
         <Header />
-        <main className="flex-1 p-6 bg-gradient-to-br from-slate-50/50 to-white">
-          <div className="max-w-7xl mx-auto">
-            {children}
+        <main className="flex-1 bg-gradient-to-br from-slate-50/50 via-white to-blue-50/30 min-h-0">
+          <div className="h-full p-6 lg:p-8">
+            <div className="max-w-7xl mx-auto h-full">
+              {children}
+            </div>
           </div>
         </main>
       </SidebarInset>

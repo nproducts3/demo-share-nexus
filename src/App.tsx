@@ -24,7 +24,7 @@ function App() {
         <NotificationsProvider>
           <Router>
             <SidebarProvider>
-              <div className="min-h-screen bg-gray-50 flex w-full">
+              <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/20 flex w-full antialiased">
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/demo-sessions" element={<DemoSessions />} />

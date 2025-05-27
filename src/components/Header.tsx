@@ -38,32 +38,32 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4">
-      <div className="flex items-center justify-between">
+    <header className="sticky top-0 z-40 w-full border-b border-slate-200/60 bg-white/95 backdrop-blur-xl supports-[backdrop-filter]:bg-white/80">
+      <div className="flex h-16 items-center justify-between px-6 lg:px-8">
         {/* Search Bar */}
-        <div className="flex-1 max-w-md">
+        <div className="flex-1 max-w-lg">
           <div className="relative">
-            <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
+            <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
             <Input
               placeholder="Search sessions, users, or settings..."
-              className="pl-10 w-full"
+              className="pl-10 w-full bg-slate-50/50 border-slate-200 focus:bg-white focus:border-blue-300 transition-all duration-200 placeholder:text-slate-400"
             />
           </div>
         </div>
 
         {/* Right Side Actions */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3 ml-6">
           {/* Notifications */}
           <div className="relative">
             <Button
               variant="ghost"
               size="sm"
-              className="relative"
+              className="relative h-9 w-9 rounded-full hover:bg-slate-100 transition-colors duration-200"
               onClick={() => navigate('/notifications')}
             >
-              <Bell className="h-5 w-5" />
+              <Bell className="h-5 w-5 text-slate-600" />
               {unreadCount > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-red-500 hover:bg-red-500 border-2 border-white">
                   {unreadCount}
                 </Badge>
               )}
@@ -73,30 +73,41 @@ export const Header: React.FC = () => {
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center space-x-2 p-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback>{getInitials(displayName || '')}</AvatarFallback>
+              <Button variant="ghost" className="flex items-center space-x-3 p-2 h-auto rounded-lg hover:bg-slate-100 transition-colors duration-200">
+                <Avatar className="h-9 w-9 border-2 border-slate-200 shadow-sm">
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-semibold text-sm">
+                    {getInitials(displayName || '')}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="text-left hidden md:block">
-                  <div className="text-sm font-medium">{displayName}</div>
-                  <div className="text-xs text-gray-500">{displayEmail}</div>
+                  <div className="text-sm font-semibold text-slate-900">{displayName}</div>
+                  <div className="text-xs text-slate-500 font-medium">{displayEmail}</div>
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate('/settings')}>
-                <User className="mr-2 h-4 w-4" />
+            <DropdownMenuContent align="end" className="w-56 bg-white border border-slate-200 shadow-lg">
+              <DropdownMenuLabel className="text-slate-900 font-semibold">My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-slate-200" />
+              <DropdownMenuItem 
+                onClick={() => navigate('/settings')}
+                className="text-slate-700 hover:bg-slate-50 focus:bg-slate-50 cursor-pointer"
+              >
+                <User className="mr-3 h-4 w-4 text-slate-500" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/settings')}>
-                <Settings className="mr-2 h-4 w-4" />
+              <DropdownMenuItem 
+                onClick={() => navigate('/settings')}
+                className="text-slate-700 hover:bg-slate-50 focus:bg-slate-50 cursor-pointer"
+              >
+                <Settings className="mr-3 h-4 w-4 text-slate-500" />
                 <span>Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
+              <DropdownMenuSeparator className="bg-slate-200" />
+              <DropdownMenuItem 
+                onClick={handleLogout}
+                className="text-red-600 hover:bg-red-50 focus:bg-red-50 cursor-pointer"
+              >
+                <LogOut className="mr-3 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
