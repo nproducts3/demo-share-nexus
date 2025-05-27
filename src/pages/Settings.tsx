@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Settings as SettingsIcon, User, Users, Bell, Key, Save, Shield, Mail, Phone, Building, User2 } from 'lucide-react';
+import { Settings as SettingsIcon, User, Users, Bell, Key, Save, Shield, Mail, Phone, Building, User2, Edit, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,8 +16,15 @@ const Settings = () => {
   const { adminProfile, updateAdminProfile } = useAdmin();
   const { toast } = useToast();
   
+  // Edit mode states for each tab
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isEditingTeam, setIsEditingTeam] = useState(false);
+  const [isEditingNotifications, setIsEditingNotifications] = useState(false);
+  const [isEditingAdvanced, setIsEditingAdvanced] = useState(false);
+  
   // Local state for form inputs
   const [profileForm, setProfileForm] = useState(adminProfile);
+  const [originalProfileForm, setOriginalProfileForm] = useState(adminProfile);
 
   const [teamSettings, setTeamSettings] = useState({
     maxSessionsPerDay: '10',
@@ -25,8 +32,21 @@ const Settings = () => {
     requireManagerApproval: false,
     sessionReminderHours: '24'
   });
+  const [originalTeamSettings, setOriginalTeamSettings] = useState({
+    maxSessionsPerDay: '10',
+    autoApproveRegistrations: true,
+    requireManagerApproval: false,
+    sessionReminderHours: '24'
+  });
 
   const [notificationSettings, setNotificationSettings] = useState({
+    emailNotifications: true,
+    pushNotifications: true,
+    sessionReminders: true,
+    weeklyReports: false,
+    marketingEmails: false
+  });
+  const [originalNotificationSettings, setOriginalNotificationSettings] = useState({
     emailNotifications: true,
     pushNotifications: true,
     sessionReminders: true,
@@ -46,30 +66,81 @@ const Settings = () => {
     autoBackup: true,
     maintenanceMode: false
   });
+  const [originalAdvancedSettings, setOriginalAdvancedSettings] = useState({
+    sessionTimeout: '30',
+    maxFileSize: '10',
+    enableDebugMode: false,
+    autoBackup: true,
+    maintenanceMode: false
+  });
+
+  const handleProfileEdit = () => {
+    setIsEditingProfile(true);
+    setOriginalProfileForm({ ...profileForm });
+  };
+
+  const handleProfileCancel = () => {
+    setProfileForm({ ...originalProfileForm });
+    setIsEditingProfile(false);
+  };
 
   const handleProfileSave = () => {
     updateAdminProfile(profileForm);
+    setIsEditingProfile(false);
     toast({
       title: "Profile Updated",
       description: "Your profile settings have been saved and are now reflected throughout the application.",
     });
   };
 
+  const handleTeamEdit = () => {
+    setIsEditingTeam(true);
+    setOriginalTeamSettings({ ...teamSettings });
+  };
+
+  const handleTeamCancel = () => {
+    setTeamSettings({ ...originalTeamSettings });
+    setIsEditingTeam(false);
+  };
+
   const handleTeamSave = () => {
+    setIsEditingTeam(false);
     toast({
       title: "Team Settings Saved",
       description: "Team management settings have been updated successfully.",
     });
   };
 
+  const handleNotificationEdit = () => {
+    setIsEditingNotifications(true);
+    setOriginalNotificationSettings({ ...notificationSettings });
+  };
+
+  const handleNotificationCancel = () => {
+    setNotificationSettings({ ...originalNotificationSettings });
+    setIsEditingNotifications(false);
+  };
+
   const handleNotificationSave = () => {
+    setIsEditingNotifications(false);
     toast({
       title: "Notification Settings Saved", 
       description: "Your notification preferences have been updated.",
     });
   };
 
+  const handleAdvancedEdit = () => {
+    setIsEditingAdvanced(true);
+    setOriginalAdvancedSettings({ ...advancedSettings });
+  };
+
+  const handleAdvancedCancel = () => {
+    setAdvancedSettings({ ...originalAdvancedSettings });
+    setIsEditingAdvanced(false);
+  };
+
   const handleAdvancedSave = () => {
+    setIsEditingAdvanced(false);
     toast({
       title: "Advanced Settings Saved",
       description: "System settings have been updated successfully.",
@@ -111,13 +182,34 @@ const Settings = () => {
           <TabsContent value="profile" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <User2 className="h-5 w-5 mr-2" />
-                  Profile Information
-                </CardTitle>
-                <CardDescription>
-                  Update your personal information and profile settings
-                </CardDescription>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="flex items-center">
+                      <User2 className="h-5 w-5 mr-2" />
+                      Profile Information
+                    </CardTitle>
+                    <CardDescription>
+                      Update your personal information and profile settings
+                    </CardDescription>
+                  </div>
+                  {!isEditingProfile ? (
+                    <Button onClick={handleProfileEdit} variant="outline" className="flex items-center space-x-2">
+                      <Edit className="h-4 w-4" />
+                      <span>Edit</span>
+                    </Button>
+                  ) : (
+                    <div className="flex space-x-2">
+                      <Button onClick={handleProfileCancel} variant="outline" className="flex items-center space-x-2">
+                        <X className="h-4 w-4" />
+                        <span>Cancel</span>
+                      </Button>
+                      <Button onClick={handleProfileSave} className="flex items-center space-x-2">
+                        <Save className="h-4 w-4" />
+                        <span>Save</span>
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -128,6 +220,8 @@ const Settings = () => {
                       value={profileForm.name}
                       onChange={(e) => setProfileForm(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="Enter your full name"
+                      readOnly={!isEditingProfile}
+                      className={!isEditingProfile ? "bg-gray-50" : ""}
                     />
                   </div>
                   <div className="space-y-2">
@@ -139,8 +233,9 @@ const Settings = () => {
                         type="email"
                         value={profileForm.email}
                         onChange={(e) => setProfileForm(prev => ({ ...prev, email: e.target.value }))}
-                        className="pl-10"
+                        className={`pl-10 ${!isEditingProfile ? "bg-gray-50" : ""}`}
                         placeholder="Enter your email"
+                        readOnly={!isEditingProfile}
                       />
                     </div>
                   </div>
@@ -152,8 +247,9 @@ const Settings = () => {
                         id="phone"
                         value={profileForm.phone}
                         onChange={(e) => setProfileForm(prev => ({ ...prev, phone: e.target.value }))}
-                        className="pl-10"
+                        className={`pl-10 ${!isEditingProfile ? "bg-gray-50" : ""}`}
                         placeholder="Enter your phone number"
+                        readOnly={!isEditingProfile}
                       />
                     </div>
                   </div>
@@ -165,8 +261,9 @@ const Settings = () => {
                         id="department"
                         value={profileForm.department}
                         onChange={(e) => setProfileForm(prev => ({ ...prev, department: e.target.value }))}
-                        className="pl-10"
+                        className={`pl-10 ${!isEditingProfile ? "bg-gray-50" : ""}`}
                         placeholder="Enter your department"
+                        readOnly={!isEditingProfile}
                       />
                     </div>
                   </div>
@@ -177,6 +274,8 @@ const Settings = () => {
                       value={profileForm.company}
                       onChange={(e) => setProfileForm(prev => ({ ...prev, company: e.target.value }))}
                       placeholder="Enter your company name"
+                      readOnly={!isEditingProfile}
+                      className={!isEditingProfile ? "bg-gray-50" : ""}
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
@@ -187,14 +286,10 @@ const Settings = () => {
                       onChange={(e) => setProfileForm(prev => ({ ...prev, bio: e.target.value }))}
                       placeholder="Tell us about yourself..."
                       rows={3}
+                      readOnly={!isEditingProfile}
+                      className={!isEditingProfile ? "bg-gray-50" : ""}
                     />
                   </div>
-                </div>
-                <div className="flex justify-end">
-                  <Button onClick={handleProfileSave} className="flex items-center space-x-2">
-                    <Save className="h-4 w-4" />
-                    <span>Save Profile</span>
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -203,13 +298,34 @@ const Settings = () => {
           <TabsContent value="team" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Users className="h-5 w-5 mr-2" />
-                  Team Management
-                </CardTitle>
-                <CardDescription>
-                  Configure team-wide settings and policies
-                </CardDescription>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="flex items-center">
+                      <Users className="h-5 w-5 mr-2" />
+                      Team Management
+                    </CardTitle>
+                    <CardDescription>
+                      Configure team-wide settings and policies
+                    </CardDescription>
+                  </div>
+                  {!isEditingTeam ? (
+                    <Button onClick={handleTeamEdit} variant="outline" className="flex items-center space-x-2">
+                      <Edit className="h-4 w-4" />
+                      <span>Edit</span>
+                    </Button>
+                  ) : (
+                    <div className="flex space-x-2">
+                      <Button onClick={handleTeamCancel} variant="outline" className="flex items-center space-x-2">
+                        <X className="h-4 w-4" />
+                        <span>Cancel</span>
+                      </Button>
+                      <Button onClick={handleTeamSave} className="flex items-center space-x-2">
+                        <Save className="h-4 w-4" />
+                        <span>Save</span>
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -220,6 +336,8 @@ const Settings = () => {
                       type="number"
                       value={teamSettings.maxSessionsPerDay}
                       onChange={(e) => setTeamSettings(prev => ({ ...prev, maxSessionsPerDay: e.target.value }))}
+                      readOnly={!isEditingTeam}
+                      className={!isEditingTeam ? "bg-gray-50" : ""}
                     />
                   </div>
                   <div className="space-y-2">
@@ -229,6 +347,8 @@ const Settings = () => {
                       type="number"
                       value={teamSettings.sessionReminderHours}
                       onChange={(e) => setTeamSettings(prev => ({ ...prev, sessionReminderHours: e.target.value }))}
+                      readOnly={!isEditingTeam}
+                      className={!isEditingTeam ? "bg-gray-50" : ""}
                     />
                   </div>
                 </div>
@@ -241,6 +361,7 @@ const Settings = () => {
                     <Switch
                       checked={teamSettings.autoApproveRegistrations}
                       onCheckedChange={(checked) => setTeamSettings(prev => ({ ...prev, autoApproveRegistrations: checked }))}
+                      disabled={!isEditingTeam}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -251,14 +372,9 @@ const Settings = () => {
                     <Switch
                       checked={teamSettings.requireManagerApproval}
                       onCheckedChange={(checked) => setTeamSettings(prev => ({ ...prev, requireManagerApproval: checked }))}
+                      disabled={!isEditingTeam}
                     />
                   </div>
-                </div>
-                <div className="flex justify-end">
-                  <Button onClick={handleTeamSave} className="flex items-center space-x-2">
-                    <Save className="h-4 w-4" />
-                    <span>Save Team Settings</span>
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -267,13 +383,34 @@ const Settings = () => {
           <TabsContent value="notifications" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Bell className="h-5 w-5 mr-2" />
-                  Notification Preferences
-                </CardTitle>
-                <CardDescription>
-                  Manage how you receive notifications and updates
-                </CardDescription>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="flex items-center">
+                      <Bell className="h-5 w-5 mr-2" />
+                      Notification Preferences
+                    </CardTitle>
+                    <CardDescription>
+                      Manage how you receive notifications and updates
+                    </CardDescription>
+                  </div>
+                  {!isEditingNotifications ? (
+                    <Button onClick={handleNotificationEdit} variant="outline" className="flex items-center space-x-2">
+                      <Edit className="h-4 w-4" />
+                      <span>Edit</span>
+                    </Button>
+                  ) : (
+                    <div className="flex space-x-2">
+                      <Button onClick={handleNotificationCancel} variant="outline" className="flex items-center space-x-2">
+                        <X className="h-4 w-4" />
+                        <span>Cancel</span>
+                      </Button>
+                      <Button onClick={handleNotificationSave} className="flex items-center space-x-2">
+                        <Save className="h-4 w-4" />
+                        <span>Save</span>
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
@@ -292,15 +429,10 @@ const Settings = () => {
                       <Switch
                         checked={value}
                         onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, [key]: checked }))}
+                        disabled={!isEditingNotifications}
                       />
                     </div>
                   ))}
-                </div>
-                <div className="flex justify-end">
-                  <Button onClick={handleNotificationSave} className="flex items-center space-x-2">
-                    <Save className="h-4 w-4" />
-                    <span>Save Notifications</span>
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -344,13 +476,34 @@ const Settings = () => {
           <TabsContent value="advanced" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Shield className="h-5 w-5 mr-2" />
-                  Advanced Settings
-                </CardTitle>
-                <CardDescription>
-                  Configure advanced system settings and preferences
-                </CardDescription>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="flex items-center">
+                      <Shield className="h-5 w-5 mr-2" />
+                      Advanced Settings
+                    </CardTitle>
+                    <CardDescription>
+                      Configure advanced system settings and preferences
+                    </CardDescription>
+                  </div>
+                  {!isEditingAdvanced ? (
+                    <Button onClick={handleAdvancedEdit} variant="outline" className="flex items-center space-x-2">
+                      <Edit className="h-4 w-4" />
+                      <span>Edit</span>
+                    </Button>
+                  ) : (
+                    <div className="flex space-x-2">
+                      <Button onClick={handleAdvancedCancel} variant="outline" className="flex items-center space-x-2">
+                        <X className="h-4 w-4" />
+                        <span>Cancel</span>
+                      </Button>
+                      <Button onClick={handleAdvancedSave} className="flex items-center space-x-2">
+                        <Save className="h-4 w-4" />
+                        <span>Save</span>
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -361,6 +514,8 @@ const Settings = () => {
                       type="number"
                       value={advancedSettings.sessionTimeout}
                       onChange={(e) => setAdvancedSettings(prev => ({ ...prev, sessionTimeout: e.target.value }))}
+                      readOnly={!isEditingAdvanced}
+                      className={!isEditingAdvanced ? "bg-gray-50" : ""}
                     />
                   </div>
                   <div className="space-y-2">
@@ -370,6 +525,8 @@ const Settings = () => {
                       type="number"
                       value={advancedSettings.maxFileSize}
                       onChange={(e) => setAdvancedSettings(prev => ({ ...prev, maxFileSize: e.target.value }))}
+                      readOnly={!isEditingAdvanced}
+                      className={!isEditingAdvanced ? "bg-gray-50" : ""}
                     />
                   </div>
                 </div>
@@ -382,6 +539,7 @@ const Settings = () => {
                     <Switch
                       checked={advancedSettings.enableDebugMode}
                       onCheckedChange={(checked) => setAdvancedSettings(prev => ({ ...prev, enableDebugMode: checked }))}
+                      disabled={!isEditingAdvanced}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -392,6 +550,7 @@ const Settings = () => {
                     <Switch
                       checked={advancedSettings.autoBackup}
                       onCheckedChange={(checked) => setAdvancedSettings(prev => ({ ...prev, autoBackup: checked }))}
+                      disabled={!isEditingAdvanced}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -402,14 +561,9 @@ const Settings = () => {
                     <Switch
                       checked={advancedSettings.maintenanceMode}
                       onCheckedChange={(checked) => setAdvancedSettings(prev => ({ ...prev, maintenanceMode: checked }))}
+                      disabled={!isEditingAdvanced}
                     />
                   </div>
-                </div>
-                <div className="flex justify-end">
-                  <Button onClick={handleAdvancedSave} className="flex items-center space-x-2">
-                    <Save className="h-4 w-4" />
-                    <span>Save Advanced Settings</span>
-                  </Button>
                 </div>
               </CardContent>
             </Card>
