@@ -5,6 +5,7 @@ import { Calendar, Users, User, Home, BarChart3, Settings, LogOut } from 'lucide
 import { Button } from '@/components/ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { toast } from '@/hooks/use-toast';
 import {
   Sidebar,
   SidebarContent,
@@ -20,6 +21,23 @@ export const AppSidebar: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const handleLogout = () => {
+    try {
+      logout();
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of your account.",
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Logout failed",
+        description: "There was an error logging out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const adminMenuItems = [
     { icon: Home, label: 'Dashboard', href: '/' },
@@ -93,7 +111,7 @@ export const AppSidebar: React.FC = () => {
         
         <Button 
           variant="outline" 
-          onClick={logout}
+          onClick={handleLogout}
           className="w-full mt-3 border-slate-200 hover:bg-red-50 hover:border-red-200 hover:text-red-700 transition-colors duration-200"
         >
           <LogOut className="h-4 w-4 mr-2" />
