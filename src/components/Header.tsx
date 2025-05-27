@@ -16,15 +16,13 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '../contexts/AuthContext';
 import { useAdmin } from '../contexts/AdminContext';
 import { useNotifications } from '../contexts/NotificationsContext';
-import { NotificationsPopup } from './NotificationsPopup';
 import { useNavigate } from 'react-router-dom';
 
 export const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const { adminProfile } = useAdmin();
-  const { notifications, unreadCount } = useNotifications();
+  const { unreadCount } = useNotifications();
   const navigate = useNavigate();
-  const [showNotifications, setShowNotifications] = React.useState(false);
 
   const handleLogout = () => {
     logout();
@@ -61,7 +59,7 @@ export const Header: React.FC = () => {
               variant="ghost"
               size="sm"
               className="relative"
-              onClick={() => setShowNotifications(!showNotifications)}
+              onClick={() => navigate('/notifications')}
             >
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
@@ -70,13 +68,6 @@ export const Header: React.FC = () => {
                 </Badge>
               )}
             </Button>
-            
-            {showNotifications && (
-              <NotificationsPopup
-                notifications={notifications}
-                onClose={() => setShowNotifications(false)}
-              />
-            )}
           </div>
 
           {/* User Menu */}

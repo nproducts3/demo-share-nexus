@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { AdminProvider } from './contexts/AdminContext';
 import { NotificationsProvider } from './contexts/NotificationsContext';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import Index from './pages/Index';
 import DemoSessions from './pages/DemoSessions';
@@ -22,20 +23,22 @@ function App() {
       <AdminProvider>
         <NotificationsProvider>
           <Router>
-            <div className="min-h-screen bg-gray-50">
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/demo-sessions" element={<DemoSessions />} />
-                <Route path="/user-management" element={<UserManagement />} />
-                <Route path="/analytics" element={<Analytics />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/my-sessions" element={<MySessions />} />
-                <Route path="/my-progress" element={<MyProgress />} />
-                <Route path="/notifications" element={<Notifications />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <Toaster />
-            </div>
+            <SidebarProvider>
+              <div className="min-h-screen bg-gray-50 flex w-full">
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/demo-sessions" element={<DemoSessions />} />
+                  <Route path="/user-management" element={<UserManagement />} />
+                  <Route path="/analytics" element={<Analytics />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/my-sessions" element={<MySessions />} />
+                  <Route path="/my-progress" element={<MyProgress />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                <Toaster />
+              </div>
+            </SidebarProvider>
           </Router>
         </NotificationsProvider>
       </AdminProvider>
