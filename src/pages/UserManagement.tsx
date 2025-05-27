@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Plus, Search, UserCheck, UserX, Mail, Phone, Calendar, Edit, Trash2, Shield, Award } from 'lucide-react';
+import { Users, Plus, Search, UserCheck, UserX, Mail, Phone, Calendar, Edit, Trash2, Shield, Award, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,9 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Layout } from '../components/Layout';
+import { AddUserModal } from '../components/AddUserModal';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface User {
   id: string;
@@ -31,6 +33,7 @@ interface User {
 
 const UserManagement = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -143,6 +146,44 @@ const UserManagement = () => {
     return matchesSearch && matchesRole && matchesStatus && matchesDepartment && matchesSkillLevel;
   });
 
+  const handleAddUser = (newUser: User) => {
+    setUsers(prev => [...prev, newUser]);
+  };
+
+  const handleExportUsers = () => {
+    const csvContent = [
+      ['Name', 'Email', 'Role', 'Department', 'Status', 'Join Date', 'Sessions Attended', 'Total Hours', 'Skill Level'].join(','),
+      ...filteredUsers.map(user => [
+        user.name,
+        user.email,
+        user.role,
+        user.department,
+        user.status,
+        user.joinDate,
+        user.sessionsAttended,
+        user.totalHours,
+        user.skillLevel
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `users-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+
+    toast({
+      title: "Export Complete",
+      description: "User data has been exported successfully.",
+    });
+  };
+
+  const handleUserNameClick = (userId: string) => {
+    navigate(`/user-profile/${userId}`);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
@@ -229,10 +270,13 @@ const UserManagement = () => {
             <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
             <p className="text-gray-600 mt-1">Manage users, roles, and permissions</p>
           </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add User
-          </Button>
+          <div className="flex space-x-2">
+            <Button variant="outline" onClick={handleExportUsers}>
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <AddUserModal onAddUser={handleAddUser} />
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -389,7 +433,12 @@ const UserManagement = () => {
                               <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
                             </Avatar>
                             <div>
-                              <div className="font-medium">{user.name}</div>
+                              <div 
+                                className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer"
+                                onClick={() => handleUserNameClick(user.id)}
+                              >
+                                {user.name}
+                              </div>
                               <div className="text-sm text-gray-500 flex items-center">
                                 <Mail className="h-3 w-3 mr-1" />
                                 {user.email}

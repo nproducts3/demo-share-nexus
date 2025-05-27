@@ -1,45 +1,25 @@
 
 import React, { useState } from 'react';
-import { Layout } from '../components/Layout';
 import { useNotifications } from '../contexts/NotificationsContext';
+import { Layout } from '../components/Layout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Bell, Search, Filter, Archive, Trash2, CheckCheck, Settings, Download, Star, Clock, AlertCircle, CheckCircle, Info, ExternalLink } from 'lucide-react';
+import { Bell, Check, CheckCheck, Trash2, Clock, ExternalLink, Filter } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 const Notifications = () => {
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearAllNotifications } = useNotifications();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [selectedNotifications, setSelectedNotifications] = useState<string[]>([]);
-  const [notificationSettings, setNotificationSettings] = useState({
-    emailNotifications: true,
-    pushNotifications: true,
-    smsNotifications: false,
-    desktopNotifications: true,
-    marketingEmails: false,
-    securityAlerts: true,
-    systemUpdates: true,
-    dailyDigest: true,
-  });
+  const [filterType, setFilterType] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
 
   const filteredNotifications = notifications.filter(notification => {
-    const matchesSearch = notification.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         notification.message.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === 'all' || notification.type === filterType;
     const matchesStatus = filterStatus === 'all' || 
-                         (filterStatus === 'read' && notification.read) ||
-                         (filterStatus === 'unread' && !notification.read);
-    
-    return matchesSearch && matchesType && matchesStatus;
+      (filterStatus === 'read' && notification.read) || 
+      (filterStatus === 'unread' && !notification.read);
+    return matchesType && matchesStatus;
   });
 
   const formatTimestamp = (timestamp: Date) => {
@@ -56,72 +36,28 @@ const Notifications = () => {
   };
 
   const getNotificationIcon = (type: string) => {
-    const iconClass = "h-5 w-5";
+    const iconClass = "h-4 w-4";
     switch (type) {
-      case 'success': return <CheckCircle className={`${iconClass} text-green-500`} />;
-      case 'warning': return <AlertCircle className={`${iconClass} text-yellow-500`} />;
-      case 'error': return <AlertCircle className={`${iconClass} text-red-500`} />;
-      default: return <Info className={`${iconClass} text-blue-500`} />;
+      case 'success': return <Check className={`${iconClass} text-green-500`} />;
+      case 'warning': return <Clock className={`${iconClass} text-yellow-500`} />;
+      case 'error': return <ExternalLink className={`${iconClass} text-red-500`} />;
+      default: return <Bell className={`${iconClass} text-blue-500`} />;
     }
   };
 
-  const handleSelectNotification = (id: string) => {
-    setSelectedNotifications(prev => 
-      prev.includes(id) 
-        ? prev.filter(nId => nId !== id)
-        : [...prev, id]
-    );
-  };
-
-  const handleSelectAll = () => {
-    if (selectedNotifications.length === filteredNotifications.length) {
-      setSelectedNotifications([]);
-    } else {
-      setSelectedNotifications(filteredNotifications.map(n => n.id));
-    }
-  };
-
-  const handleBulkDelete = () => {
-    selectedNotifications.forEach(id => deleteNotification(id));
-    setSelectedNotifications([]);
+  const handleMarkAllAsRead = () => {
+    markAllAsRead();
     toast({
-      title: "Notifications deleted",
-      description: `${selectedNotifications.length} notifications have been deleted`,
+      title: "Success",
+      description: "All notifications marked as read",
     });
   };
 
-  const handleBulkMarkAsRead = () => {
-    selectedNotifications.forEach(id => markAsRead(id));
-    setSelectedNotifications([]);
+  const handleClearAll = () => {
+    clearAllNotifications();
     toast({
-      title: "Notifications marked as read",
-      description: `${selectedNotifications.length} notifications have been marked as read`,
-    });
-  };
-
-  const handleExportNotifications = () => {
-    const exportData = JSON.stringify(filteredNotifications, null, 2);
-    const blob = new Blob([exportData], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `notifications-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: "Export successful",
-      description: "Notifications have been exported to JSON file",
-    });
-  };
-
-  const updateNotificationSetting = (key: string, value: boolean) => {
-    setNotificationSettings(prev => ({ ...prev, [key]: value }));
-    toast({
-      title: "Setting updated",
-      description: `${key.replace(/([A-Z])/g, ' $1').toLowerCase()} ${value ? 'enabled' : 'disabled'}`,
+      title: "Success",
+      description: "All notifications cleared",
     });
   };
 
@@ -129,354 +65,188 @@ const Notifications = () => {
     <Layout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-              Notifications
-            </h1>
-            <p className="text-slate-600 mt-1">
-              Manage and customize your notification preferences
-            </p>
+            <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
+            <p className="text-gray-600 mt-1">Stay updated with your latest activities</p>
           </div>
           <div className="flex items-center space-x-2">
-            <Badge variant="secondary" className="text-sm">
-              {unreadCount} unread
-            </Badge>
-            <Button variant="outline" onClick={handleExportNotifications}>
-              <Download className="h-4 w-4 mr-2" />
-              Export
+            {unreadCount > 0 && (
+              <Button variant="outline" onClick={handleMarkAllAsRead}>
+                <CheckCheck className="h-4 w-4 mr-2" />
+                Mark all read
+              </Button>
+            )}
+            <Button variant="outline" onClick={handleClearAll}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear all
             </Button>
           </div>
         </div>
 
-        <Tabs defaultValue="inbox" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="inbox" className="flex items-center space-x-2">
-              <Bell className="h-4 w-4" />
-              <span>Inbox</span>
-            </TabsTrigger>
-            <TabsTrigger value="archived" className="flex items-center space-x-2">
-              <Archive className="h-4 w-4" />
-              <span>Archived</span>
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center space-x-2">
-              <Settings className="h-4 w-4" />
-              <span>Settings</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="inbox" className="space-y-6">
-            {/* Search and Filters */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex flex-col lg:flex-row gap-4">
-                  <div className="relative flex-1">
-                    <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                    <Input
-                      placeholder="Search notifications..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                  <Select value={filterType} onValueChange={setFilterType}>
-                    <SelectTrigger className="w-full lg:w-48">
-                      <SelectValue placeholder="Filter by type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="info">Info</SelectItem>
-                      <SelectItem value="success">Success</SelectItem>
-                      <SelectItem value="warning">Warning</SelectItem>
-                      <SelectItem value="error">Error</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-full lg:w-48">
-                      <SelectValue placeholder="Filter by status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="unread">Unread</SelectItem>
-                      <SelectItem value="read">Read</SelectItem>
-                    </SelectContent>
-                  </Select>
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Total Notifications</p>
+                  <p className="text-2xl font-bold">{notifications.length}</p>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Bulk Actions */}
-            {selectedNotifications.length > 0 && (
-              <Card className="border-blue-200 bg-blue-50">
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-blue-900">
-                      {selectedNotifications.length} notification{selectedNotifications.length !== 1 ? 's' : ''} selected
-                    </span>
-                    <div className="flex items-center space-x-2">
-                      <Button variant="outline" size="sm" onClick={handleBulkMarkAsRead}>
-                        <CheckCheck className="h-4 w-4 mr-2" />
-                        Mark as Read
-                      </Button>
-                      <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Actions Bar */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSelectAll}
-                >
-                  {selectedNotifications.length === filteredNotifications.length ? 'Deselect All' : 'Select All'}
-                </Button>
-                {unreadCount > 0 && (
-                  <Button variant="outline" size="sm" onClick={markAllAsRead}>
-                    <CheckCheck className="h-4 w-4 mr-2" />
-                    Mark All as Read
-                  </Button>
-                )}
+                <Bell className="h-8 w-8 text-blue-500" />
               </div>
-              <Button variant="destructive" size="sm" onClick={clearAllNotifications}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Clear All
-              </Button>
-            </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Unread</p>
+                  <p className="text-2xl font-bold">{unreadCount}</p>
+                </div>
+                <Badge className="bg-red-100 text-red-800 border-red-300">
+                  {unreadCount}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Read</p>
+                  <p className="text-2xl font-bold">{notifications.length - unreadCount}</p>
+                </div>
+                <Check className="h-8 w-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-            {/* Notifications List */}
-            <div className="space-y-3">
-              {filteredNotifications.length === 0 ? (
-                <Card>
-                  <CardContent className="pt-12 pb-12 text-center">
-                    <Bell className="h-16 w-16 mx-auto mb-4 text-slate-300" />
-                    <h3 className="text-lg font-medium text-slate-900 mb-2">No notifications found</h3>
-                    <p className="text-slate-500">
-                      {searchTerm || filterType !== 'all' || filterStatus !== 'all'
-                        ? 'Try adjusting your filters or search terms'
-                        : 'You\'re all caught up! New notifications will appear here.'}
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                filteredNotifications.map((notification) => (
-                  <Card
+        {/* Filters */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Filter className="h-5 w-5 mr-2" />
+              Filters
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Type</label>
+                <Select value={filterType} onValueChange={setFilterType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="info">Info</SelectItem>
+                    <SelectItem value="success">Success</SelectItem>
+                    <SelectItem value="warning">Warning</SelectItem>
+                    <SelectItem value="error">Error</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Status</label>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="unread">Unread</SelectItem>
+                    <SelectItem value="read">Read</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Notifications List */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Notifications ({filteredNotifications.length})</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {filteredNotifications.length === 0 ? (
+              <div className="p-8 text-center text-slate-500">
+                <Bell className="h-12 w-12 mx-auto mb-2 text-slate-300" />
+                <p className="text-sm">No notifications match your filters</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-200">
+                {filteredNotifications.map((notification) => (
+                  <div
                     key={notification.id}
-                    className={`cursor-pointer transition-all hover:shadow-md ${
-                      !notification.read ? 'border-l-4 border-l-blue-500 bg-blue-50/30' : ''
-                    } ${selectedNotifications.includes(notification.id) ? 'ring-2 ring-blue-500' : ''}`}
+                    className={`p-4 hover:bg-slate-50 transition-colors ${
+                      !notification.read ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                    }`}
                   >
-                    <CardContent className="pt-6">
-                      <div className="flex items-start space-x-4">
-                        <div className="flex items-center space-x-3">
-                          <input
-                            type="checkbox"
-                            checked={selectedNotifications.includes(notification.id)}
-                            onChange={() => handleSelectNotification(notification.id)}
-                            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <div className="flex-shrink-0">
-                            {getNotificationIcon(notification.type)}
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center space-x-2">
-                              <h3 className={`font-medium ${!notification.read ? 'text-slate-900' : 'text-slate-700'}`}>
-                                {notification.title}
-                              </h3>
-                              <Badge variant={notification.type === 'error' ? 'destructive' : 'secondary'} className="text-xs">
-                                {notification.type}
-                              </Badge>
-                              {!notification.read && (
-                                <Badge variant="default" className="text-xs">
-                                  New
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-xs text-slate-500 flex items-center">
-                                <Clock className="h-3 w-3 mr-1" />
-                                {formatTimestamp(new Date(notification.timestamp))}
-                              </span>
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 mt-1">
+                        {getNotificationIcon(notification.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className={`text-sm font-medium ${!notification.read ? 'text-slate-900' : 'text-slate-700'}`}>
+                            {notification.title}
+                          </p>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-slate-500">
+                              {formatTimestamp(new Date(notification.timestamp))}
+                            </span>
+                            {!notification.read && (
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteNotification(notification.id);
-                                }}
-                                className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                          <p className="text-sm text-slate-600 mb-3 leading-relaxed">
-                            {notification.message}
-                          </p>
-                          <div className="flex items-center justify-between">
-                            {notification.actionUrl && (
-                              <Button variant="link" size="sm" className="p-0 h-auto text-blue-600">
-                                <ExternalLink className="h-3 w-3 mr-1" />
-                                View Details
-                              </Button>
-                            )}
-                            {!notification.read && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
+                                onClick={() => {
                                   markAsRead(notification.id);
+                                  toast({
+                                    title: "Marked as read",
+                                    description: "Notification has been marked as read",
+                                  });
                                 }}
+                                className="h-6 w-6 p-0 text-slate-400 hover:text-slate-600"
                               >
-                                Mark as Read
+                                <Check className="h-3 w-3" />
                               </Button>
                             )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                deleteNotification(notification.id);
+                                toast({
+                                  title: "Notification deleted",
+                                  description: "The notification has been removed",
+                                });
+                              }}
+                              className="h-6 w-6 p-0 text-slate-400 hover:text-slate-600"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
                           </div>
                         </div>
+                        <p className="text-sm text-slate-600 mt-1 leading-relaxed">
+                          {notification.message}
+                        </p>
+                        {notification.actionUrl && (
+                          <div className="flex items-center mt-2 text-xs text-blue-600">
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            View details
+                          </div>
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="archived" className="space-y-6">
-            <Card>
-              <CardContent className="pt-12 pb-12 text-center">
-                <Archive className="h-16 w-16 mx-auto mb-4 text-slate-300" />
-                <h3 className="text-lg font-medium text-slate-900 mb-2">No archived notifications</h3>
-                <p className="text-slate-500">Archived notifications will appear here</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="settings" className="space-y-6">
-            <div className="grid gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Notification Preferences</CardTitle>
-                  <CardDescription>
-                    Choose how you want to receive notifications
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label className="text-sm font-medium">Email Notifications</Label>
-                        <p className="text-sm text-slate-500">Receive notifications via email</p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.emailNotifications}
-                        onCheckedChange={(checked) => updateNotificationSetting('emailNotifications', checked)}
-                      />
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label className="text-sm font-medium">Push Notifications</Label>
-                        <p className="text-sm text-slate-500">Receive push notifications in your browser</p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.pushNotifications}
-                        onCheckedChange={(checked) => updateNotificationSetting('pushNotifications', checked)}
-                      />
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label className="text-sm font-medium">SMS Notifications</Label>
-                        <p className="text-sm text-slate-500">Receive notifications via SMS</p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.smsNotifications}
-                        onCheckedChange={(checked) => updateNotificationSetting('smsNotifications', checked)}
-                      />
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label className="text-sm font-medium">Desktop Notifications</Label>
-                        <p className="text-sm text-slate-500">Show desktop notifications</p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.desktopNotifications}
-                        onCheckedChange={(checked) => updateNotificationSetting('desktopNotifications', checked)}
-                      />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Notification Categories</CardTitle>
-                  <CardDescription>
-                    Control which types of notifications you receive
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label className="text-sm font-medium">Security Alerts</Label>
-                        <p className="text-sm text-slate-500">Important security-related notifications</p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.securityAlerts}
-                        onCheckedChange={(checked) => updateNotificationSetting('securityAlerts', checked)}
-                      />
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label className="text-sm font-medium">System Updates</Label>
-                        <p className="text-sm text-slate-500">Notifications about system maintenance and updates</p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.systemUpdates}
-                        onCheckedChange={(checked) => updateNotificationSetting('systemUpdates', checked)}
-                      />
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label className="text-sm font-medium">Marketing Emails</Label>
-                        <p className="text-sm text-slate-500">Promotional and marketing content</p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.marketingEmails}
-                        onCheckedChange={(checked) => updateNotificationSetting('marketingEmails', checked)}
-                      />
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label className="text-sm font-medium">Daily Digest</Label>
-                        <p className="text-sm text-slate-500">Daily summary of your notifications</p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.dailyDigest}
-                        onCheckedChange={(checked) => updateNotificationSetting('dailyDigest', checked)}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );

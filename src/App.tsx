@@ -9,6 +9,7 @@ import { Toaster } from '@/components/ui/toaster';
 import Index from './pages/Index';
 import DemoSessions from './pages/DemoSessions';
 import UserManagement from './pages/UserManagement';
+import UserProfile from './pages/UserProfile';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import MySessions from './pages/MySessions';
@@ -29,6 +30,7 @@ function App() {
                   <Route path="/" element={<Index />} />
                   <Route path="/demo-sessions" element={<DemoSessions />} />
                   <Route path="/user-management" element={<UserManagement />} />
+                  <Route path="/user-profile/:userId" element={<UserProfile />} />
                   <Route path="/analytics" element={<Analytics />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/my-sessions" element={<MySessions />} />
