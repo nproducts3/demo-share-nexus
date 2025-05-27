@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Users, BarChart3, Shield, Zap, Star, Check, ArrowRight } from 'lucide-react';
+import { Calendar, Users, BarChart3, Shield, Zap, Star, Check, ArrowRight, Play } from 'lucide-react';
 
 interface LandingPageProps {
   onLoginClick: () => void;
@@ -88,12 +88,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
     }
   ];
 
+  const handleWatchDemo = () => {
+    // Demo video functionality
+    window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank');
+  };
+
+  const handleContactSales = () => {
+    // Contact sales functionality
+    window.open('mailto:sales@demotracker.com?subject=Enterprise Inquiry', '_blank');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       {/* Header */}
       <header className="border-b border-slate-200/60 bg-white/80 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
                 <Calendar className="h-4 w-4 text-white" />
@@ -105,7 +115,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
                 <p className="text-xs text-slate-500 font-medium">Knowledge Sharing Platform</p>
               </div>
             </div>
-            <div className="flex items-center space-x-3 sm:space-x-4">
+            <div className="flex items-center space-x-3">
               <Button variant="outline" onClick={onLoginClick} className="hidden sm:inline-flex">
                 Sign In
               </Button>
@@ -118,13 +128,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
       </header>
 
       {/* Hero Section */}
-      <section className="pt-16 sm:pt-20 pb-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="max-w-4xl mx-auto">
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent mb-6 leading-tight">
               Transform Your Demo Experience
             </h1>
-            <p className="text-lg sm:text-xl text-slate-600 mb-8 leading-relaxed max-w-3xl mx-auto">
+            <p className="text-lg sm:text-xl text-slate-600 mb-10 leading-relaxed max-w-3xl mx-auto">
               Empower your team with intelligent demo scheduling, advanced analytics, and seamless knowledge sharing. 
               The all-in-one platform for modern demo management.
             </p>
@@ -132,11 +142,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
               <Button 
                 size="lg" 
                 onClick={onLoginClick}
-                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-lg px-8 py-6"
+                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-lg px-8 py-3 h-12"
               >
                 Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg px-8 py-6">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                onClick={handleWatchDemo}
+                className="w-full sm:w-auto text-lg px-8 py-3 h-12"
+              >
+                <Play className="mr-2 h-5 w-5" />
                 Watch Demo
               </Button>
             </div>
@@ -145,15 +161,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 sm:py-20 bg-white/50 px-4 sm:px-6 lg:px-8">
+      <section className="py-20 bg-white/50 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12 sm:mb-16">
+          <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">Premium Features</h2>
             <p className="text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto">
               Discover the powerful features that make Demo Tracker the preferred choice for enterprise teams worldwide.
             </p>
           </div>
-          <div className="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {features.map((feature, index) => (
               <Card key={index} className="border-slate-200/60 hover:shadow-lg transition-all duration-300 group h-full">
                 <CardHeader className="pb-4">
@@ -174,15 +190,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12 sm:mb-16">
+          <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">Choose Your Plan</h2>
             <p className="text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto">
               Flexible pricing options designed to scale with your team's needs.
             </p>
           </div>
-          <div className="grid gap-6 sm:gap-8 lg:grid-cols-3">
+          <div className="grid gap-8 lg:grid-cols-3 max-w-6xl mx-auto">
             {pricingPlans.map((plan, index) => (
               <Card key={index} className={`relative border-2 transition-all duration-300 hover:shadow-xl h-full ${
                 plan.highlighted 
@@ -199,7 +215,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
                 <CardHeader className="text-center pb-4">
                   <CardTitle className="text-2xl text-slate-900">{plan.name}</CardTitle>
                   <div className="flex items-baseline justify-center mt-4">
-                    <span className="text-3xl sm:text-4xl font-bold text-slate-900">{plan.price}</span>
+                    <span className="text-4xl font-bold text-slate-900">{plan.price}</span>
                     <span className="text-slate-600 ml-1">{plan.period}</span>
                   </div>
                   <CardDescription className="mt-4">{plan.description}</CardDescription>
@@ -220,7 +236,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
                         : ''
                     }`}
                     variant={plan.highlighted ? 'default' : 'outline'}
-                    onClick={onLoginClick}
+                    onClick={plan.name === 'Enterprise' ? handleContactSales : onLoginClick}
                   >
                     {plan.name === 'Enterprise' ? 'Contact Sales' : 'Get Started'}
                   </Button>
@@ -232,7 +248,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 sm:py-20 bg-gradient-to-r from-blue-600 to-indigo-600 px-4 sm:px-6 lg:px-8">
+      <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
             Ready to Transform Your Demo Process?
@@ -243,7 +259,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
           <Button 
             size="lg" 
             onClick={onLoginClick}
-            className="w-full sm:w-auto bg-white text-blue-600 hover:bg-blue-50 text-lg px-8 py-6"
+            className="w-full sm:w-auto bg-white text-blue-600 hover:bg-blue-50 text-lg px-8 py-3 h-12"
           >
             Start Your Free Trial Today
           </Button>
