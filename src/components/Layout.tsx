@@ -1,8 +1,9 @@
 
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Sidebar } from './Sidebar';
+import { AppSidebar } from './AppSidebar';
 import { Header } from './Header';
+import { SidebarInset } from '@/components/ui/sidebar';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -16,14 +17,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar />
-      <div className="flex-1 flex flex-col">
+    <>
+      <AppSidebar />
+      <SidebarInset className="flex-1">
         <Header />
-        <main className="flex-1 p-6">
-          {children}
+        <main className="flex-1 p-6 bg-gradient-to-br from-slate-50/50 to-white">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
-      </div>
-    </div>
+      </SidebarInset>
+    </>
   );
 };
