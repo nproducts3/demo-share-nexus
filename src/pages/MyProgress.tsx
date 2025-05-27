@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { TrendingUp, Award, Target, Calendar, BarChart3, Users, Clock, Star, BookOpen, Zap } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -12,8 +11,14 @@ import { Layout } from '../components/Layout';
 const MyProgress = () => {
   const [timeRange, setTimeRange] = useState('6months');
 
-  // Mock data for charts
-  const progressData = [
+  // Complete mock data for different time ranges
+  const allProgressData = [
+    { month: 'Jan', sessions: 1, rating: 3.8, attendees: 8 },
+    { month: 'Feb', sessions: 1, rating: 4.0, attendees: 12 },
+    { month: 'Mar', sessions: 2, rating: 4.1, attendees: 18 },
+    { month: 'Apr', sessions: 2, rating: 4.2, attendees: 22 },
+    { month: 'May', sessions: 3, rating: 4.3, attendees: 28 },
+    { month: 'Jun', sessions: 3, rating: 4.4, attendees: 32 },
     { month: 'Jul', sessions: 2, rating: 4.2, attendees: 15 },
     { month: 'Aug', sessions: 3, rating: 4.4, attendees: 24 },
     { month: 'Sep', sessions: 4, rating: 4.6, attendees: 32 },
@@ -21,6 +26,74 @@ const MyProgress = () => {
     { month: 'Nov', sessions: 6, rating: 4.8, attendees: 48 },
     { month: 'Dec', sessions: 8, rating: 4.9, attendees: 56 },
   ];
+
+  const allFeedbackData = [
+    { session: 'React Hooks Workshop', rating: 4.9, comment: 'Excellent explanation of complex concepts!', date: '2024-12-15' },
+    { session: 'JavaScript ES6+', rating: 4.8, comment: 'Great examples and hands-on practice.', date: '2024-12-10' },
+    { session: 'TypeScript Basics', rating: 4.7, comment: 'Clear and well-structured presentation.', date: '2024-12-05' },
+    { session: 'API Development', rating: 4.6, comment: 'Very practical and useful session.', date: '2024-11-28' },
+    { session: 'Database Design', rating: 4.5, comment: 'Good foundation knowledge shared.', date: '2024-11-20' },
+    { session: 'Node.js Fundamentals', rating: 4.4, comment: 'Solid introduction to backend development.', date: '2024-11-15' },
+  ];
+
+  // Filter data based on selected time range
+  const filteredData = useMemo(() => {
+    let months = 12;
+    switch (timeRange) {
+      case '1month':
+        months = 1;
+        break;
+      case '3months':
+        months = 3;
+        break;
+      case '6months':
+        months = 6;
+        break;
+      case '1year':
+        months = 12;
+        break;
+      default:
+        months = 6;
+    }
+    
+    const progressData = allProgressData.slice(-months);
+    const feedbackData = allFeedbackData.slice(0, Math.min(3, months));
+    
+    // Calculate aggregated stats
+    const totalSessions = progressData.reduce((sum, item) => sum + item.sessions, 0);
+    const totalAttendees = progressData.reduce((sum, item) => sum + item.attendees, 0);
+    const avgRating = progressData.length > 0 
+      ? progressData.reduce((sum, item) => sum + item.rating, 0) / progressData.length 
+      : 0;
+    const totalHours = totalSessions * 2.5; // Assuming 2.5 hours per session
+    
+    // Growth calculations
+    const sessionsGrowth = progressData.length > 1 
+      ? progressData[progressData.length - 1].sessions - progressData[progressData.length - 2].sessions
+      : 0;
+    const attendeesGrowth = progressData.length > 1
+      ? progressData[progressData.length - 1].attendees - progressData[progressData.length - 2].attendees
+      : 0;
+    const ratingGrowth = progressData.length > 1
+      ? progressData[progressData.length - 1].rating - progressData[progressData.length - 2].rating
+      : 0;
+    const hoursGrowth = sessionsGrowth * 2.5;
+
+    return {
+      progressData,
+      feedbackData,
+      stats: {
+        totalSessions,
+        avgRating: Number(avgRating.toFixed(1)),
+        totalAttendees,
+        totalHours: Math.round(totalHours),
+        sessionsGrowth,
+        attendeesGrowth,
+        ratingGrowth: Number(ratingGrowth.toFixed(1)),
+        hoursGrowth: Math.round(hoursGrowth)
+      }
+    };
+  }, [timeRange]);
 
   const technologyData = [
     { name: 'React', sessions: 12, color: '#3B82F6' },
@@ -53,12 +126,6 @@ const MyProgress = () => {
     { title: 'Engagement Score', description: 'Maintain 4.8+ rating', progress: 95, current: 4.85, target: 4.8 },
   ];
 
-  const recentFeedback = [
-    { session: 'React Hooks Workshop', rating: 4.9, comment: 'Excellent explanation of complex concepts!', date: '2024-12-15' },
-    { session: 'JavaScript ES6+', rating: 4.8, comment: 'Great examples and hands-on practice.', date: '2024-12-10' },
-    { session: 'TypeScript Basics', rating: 4.7, comment: 'Clear and well-structured presentation.', date: '2024-12-05' },
-  ];
-
   return (
     <Layout>
       <div className="space-y-6">
@@ -88,8 +155,10 @@ const MyProgress = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-blue-700 font-medium">Total Sessions</p>
-                  <p className="text-3xl font-bold text-blue-900">33</p>
-                  <p className="text-xs text-blue-600 mt-1">+8 this month</p>
+                  <p className="text-3xl font-bold text-blue-900">{filteredData.stats.totalSessions}</p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    {filteredData.stats.sessionsGrowth >= 0 ? '+' : ''}{filteredData.stats.sessionsGrowth} this period
+                  </p>
                 </div>
                 <Calendar className="h-10 w-10 text-blue-600" />
               </div>
@@ -101,8 +170,10 @@ const MyProgress = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-green-700 font-medium">Avg Rating</p>
-                  <p className="text-3xl font-bold text-green-900">4.7</p>
-                  <p className="text-xs text-green-600 mt-1">+0.2 improvement</p>
+                  <p className="text-3xl font-bold text-green-900">{filteredData.stats.avgRating}</p>
+                  <p className="text-xs text-green-600 mt-1">
+                    {filteredData.stats.ratingGrowth >= 0 ? '+' : ''}{filteredData.stats.ratingGrowth} improvement
+                  </p>
                 </div>
                 <Star className="h-10 w-10 text-green-600" />
               </div>
@@ -114,8 +185,10 @@ const MyProgress = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-purple-700 font-medium">Total Attendees</p>
-                  <p className="text-3xl font-bold text-purple-900">287</p>
-                  <p className="text-xs text-purple-600 mt-1">+56 this month</p>
+                  <p className="text-3xl font-bold text-purple-900">{filteredData.stats.totalAttendees}</p>
+                  <p className="text-xs text-purple-600 mt-1">
+                    {filteredData.stats.attendeesGrowth >= 0 ? '+' : ''}{filteredData.stats.attendeesGrowth} this period
+                  </p>
                 </div>
                 <Users className="h-10 w-10 text-purple-600" />
               </div>
@@ -127,8 +200,10 @@ const MyProgress = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-orange-700 font-medium">Teaching Hours</p>
-                  <p className="text-3xl font-bold text-orange-900">78</p>
-                  <p className="text-xs text-orange-600 mt-1">+18 this month</p>
+                  <p className="text-3xl font-bold text-orange-900">{filteredData.stats.totalHours}</p>
+                  <p className="text-xs text-orange-600 mt-1">
+                    {filteredData.stats.hoursGrowth >= 0 ? '+' : ''}{filteredData.stats.hoursGrowth} this period
+                  </p>
                 </div>
                 <Clock className="h-10 w-10 text-orange-600" />
               </div>
@@ -158,7 +233,7 @@ const MyProgress = () => {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={progressData}>
+                    <LineChart data={filteredData.progressData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
@@ -179,7 +254,7 @@ const MyProgress = () => {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={progressData}>
+                    <BarChart data={filteredData.progressData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis domain={[0, 5]} />
@@ -226,7 +301,7 @@ const MyProgress = () => {
                   <CardDescription>Latest session feedback</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {recentFeedback.map((feedback, index) => (
+                  {filteredData.feedbackData.map((feedback, index) => (
                     <div key={index} className="border-l-4 border-blue-500 pl-4">
                       <div className="flex items-center justify-between">
                         <h4 className="font-medium">{feedback.session}</h4>
