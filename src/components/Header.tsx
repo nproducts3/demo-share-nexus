@@ -1,8 +1,9 @@
 
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Bell, Search, SidebarTrigger } from 'lucide-react';
+import { Bell, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 export const Header: React.FC = () => {
   const { user } = useAuth();
