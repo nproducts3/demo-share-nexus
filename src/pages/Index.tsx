@@ -1,13 +1,15 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { LoginForm } from '../components/LoginForm';
+import { LandingPage } from '../components/LandingPage';
 import { AdminDashboard } from '../components/AdminDashboard';
 import { EmployeeDashboard } from '../components/EmployeeDashboard';
 import { Layout } from '../components/Layout';
 
 const Index = () => {
   const { user, isLoading } = useAuth();
+  const [showLogin, setShowLogin] = useState(false);
 
   if (isLoading) {
     return (
@@ -20,10 +22,15 @@ const Index = () => {
     );
   }
 
+  // If user is not logged in, show landing page or login form
   if (!user) {
-    return <LoginForm />;
+    if (showLogin) {
+      return <LoginForm onBackToLanding={() => setShowLogin(false)} />;
+    }
+    return <LandingPage onLoginClick={() => setShowLogin(true)} />;
   }
 
+  // If user is logged in, show the appropriate dashboard
   return (
     <Layout>
       {user.role === 'admin' ? <AdminDashboard /> : <EmployeeDashboard />}
