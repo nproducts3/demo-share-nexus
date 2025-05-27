@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,9 @@ import {
   Save,
   X,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  Copy,
+  Download
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -36,6 +38,7 @@ interface TeamMember {
   role: string;
   status: 'active' | 'inactive';
   lastLogin: string;
+  joinedDate: string;
 }
 
 interface ApiKey {
@@ -45,78 +48,141 @@ interface ApiKey {
   permissions: string[];
   created: string;
   lastUsed: string;
+  isActive: boolean;
+}
+
+interface UserProfile {
+  name: string;
+  email: string;
+  company: string;
+  timezone: string;
+  language: string;
+  avatar?: string;
+  phone?: string;
+  department?: string;
+}
+
+interface NotificationSettings {
+  emailNotifications: boolean;
+  pushNotifications: boolean;
+  weeklyReports: boolean;
+  securityAlerts: boolean;
+  marketingEmails: boolean;
+  smsNotifications: boolean;
+  desktopNotifications: boolean;
+}
+
+interface AppearanceSettings {
+  theme: 'light' | 'dark' | 'system';
+  colorScheme: 'blue' | 'green' | 'purple' | 'orange';
+  fontSize: 'sm' | 'md' | 'lg';
+  sidebarCollapsed: boolean;
 }
 
 const Settings = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    name: 'John Doe',
-    email: 'john.doe@company.com',
-    company: 'Demo Corp',
-    timezone: 'America/New_York',
-    language: 'en',
+  
+  // Load data from localStorage or use defaults
+  const [formData, setFormData] = useState<UserProfile>(() => {
+    const saved = localStorage.getItem('userProfile');
+    return saved ? JSON.parse(saved) : {
+      name: 'John Doe',
+      email: 'john.doe@company.com',
+      company: 'Demo Corp',
+      timezone: 'America/New_York',
+      language: 'en',
+      phone: '+1 (555) 123-4567',
+      department: 'Engineering'
+    };
   });
 
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
-    {
-      id: '1',
-      name: 'Sarah Johnson',
-      email: 'sarah@company.com',
-      role: 'Admin',
-      status: 'active',
-      lastLogin: '2 hours ago'
-    },
-    {
-      id: '2',
-      name: 'Mike Chen',
-      email: 'mike@company.com',
-      role: 'Employee',
-      status: 'active',
-      lastLogin: '1 day ago'
-    },
-    {
-      id: '3',
-      name: 'Emma Wilson',
-      email: 'emma@company.com',
-      role: 'Employee',
-      status: 'inactive',
-      lastLogin: '1 week ago'
-    }
-  ]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() => {
+    const saved = localStorage.getItem('teamMembers');
+    return saved ? JSON.parse(saved) : [
+      {
+        id: '1',
+        name: 'Sarah Johnson',
+        email: 'sarah@company.com',
+        role: 'Admin',
+        status: 'active',
+        lastLogin: '2 hours ago',
+        joinedDate: '2024-01-15'
+      },
+      {
+        id: '2',
+        name: 'Mike Chen',
+        email: 'mike@company.com',
+        role: 'Employee',
+        status: 'active',
+        lastLogin: '1 day ago',
+        joinedDate: '2024-02-01'
+      },
+      {
+        id: '3',
+        name: 'Emma Wilson',
+        email: 'emma@company.com',
+        role: 'Manager',
+        status: 'inactive',
+        lastLogin: '1 week ago',
+        joinedDate: '2024-01-20'
+      }
+    ];
+  });
 
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([
-    {
-      id: '1',
-      name: 'Production API',
-      key: 'dk_live_...',
-      permissions: ['read', 'write'],
-      created: '2024-01-15',
-      lastUsed: '2 hours ago'
-    },
-    {
-      id: '2',
-      name: 'Development API',
-      key: 'dk_test_...',
-      permissions: ['read'],
-      created: '2024-01-10',
-      lastUsed: '1 day ago'
-    }
-  ]);
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>(() => {
+    const saved = localStorage.getItem('apiKeys');
+    return saved ? JSON.parse(saved) : [
+      {
+        id: '1',
+        name: 'Production API',
+        key: 'dk_live_1234567890abcdef',
+        permissions: ['read', 'write'],
+        created: '2024-01-15',
+        lastUsed: '2 hours ago',
+        isActive: true
+      },
+      {
+        id: '2',
+        name: 'Development API',
+        key: 'dk_test_0987654321fedcba',
+        permissions: ['read'],
+        created: '2024-01-10',
+        lastUsed: '1 day ago',
+        isActive: true
+      }
+    ];
+  });
 
-  const [notifications, setNotifications] = useState({
-    emailNotifications: true,
-    pushNotifications: false,
-    weeklyReports: true,
-    securityAlerts: true,
-    marketingEmails: false,
+  const [notifications, setNotifications] = useState<NotificationSettings>(() => {
+    const saved = localStorage.getItem('notificationSettings');
+    return saved ? JSON.parse(saved) : {
+      emailNotifications: true,
+      pushNotifications: false,
+      weeklyReports: true,
+      securityAlerts: true,
+      marketingEmails: false,
+      smsNotifications: false,
+      desktopNotifications: true,
+    };
+  });
+
+  const [appearance, setAppearance] = useState<AppearanceSettings>(() => {
+    const saved = localStorage.getItem('appearanceSettings');
+    return saved ? JSON.parse(saved) : {
+      theme: 'light',
+      colorScheme: 'blue',
+      fontSize: 'md',
+      sidebarCollapsed: false,
+    };
   });
 
   const [newMember, setNewMember] = useState({
     name: '',
     email: '',
-    role: 'Employee'
+    role: 'Employee',
+    department: ''
   });
 
   const [newApiKey, setNewApiKey] = useState({
@@ -126,6 +192,28 @@ const Settings = () => {
 
   const [showNewMemberForm, setShowNewMemberForm] = useState(false);
   const [showNewApiKeyForm, setShowNewApiKeyForm] = useState(false);
+  const [editingMember, setEditingMember] = useState<string | null>(null);
+
+  // Save data to localStorage whenever state changes
+  useEffect(() => {
+    localStorage.setItem('userProfile', JSON.stringify(formData));
+  }, [formData]);
+
+  useEffect(() => {
+    localStorage.setItem('teamMembers', JSON.stringify(teamMembers));
+  }, [teamMembers]);
+
+  useEffect(() => {
+    localStorage.setItem('apiKeys', JSON.stringify(apiKeys));
+  }, [apiKeys]);
+
+  useEffect(() => {
+    localStorage.setItem('notificationSettings', JSON.stringify(notifications));
+  }, [notifications]);
+
+  useEffect(() => {
+    localStorage.setItem('appearanceSettings', JSON.stringify(appearance));
+  }, [appearance]);
 
   const handleSaveProfile = () => {
     setIsEditing(false);
@@ -145,17 +233,28 @@ const Settings = () => {
       return;
     }
 
+    // Check for duplicate email
+    if (teamMembers.find(member => member.email === newMember.email)) {
+      toast({
+        title: "Error",
+        description: "A team member with this email already exists.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const member: TeamMember = {
       id: Date.now().toString(),
       name: newMember.name,
       email: newMember.email,
       role: newMember.role,
       status: 'active',
-      lastLogin: 'Never'
+      lastLogin: 'Never',
+      joinedDate: new Date().toISOString().split('T')[0]
     };
 
     setTeamMembers([...teamMembers, member]);
-    setNewMember({ name: '', email: '', role: 'Employee' });
+    setNewMember({ name: '', email: '', role: 'Employee', department: '' });
     setShowNewMemberForm(false);
     
     toast({
@@ -164,11 +263,35 @@ const Settings = () => {
     });
   };
 
+  const handleUpdateTeamMember = (id: string, updates: Partial<TeamMember>) => {
+    setTeamMembers(teamMembers.map(member => 
+      member.id === id ? { ...member, ...updates } : member
+    ));
+    setEditingMember(null);
+    toast({
+      title: "Team Member Updated",
+      description: "Team member information has been updated.",
+    });
+  };
+
   const handleRemoveTeamMember = (id: string) => {
+    const member = teamMembers.find(m => m.id === id);
     setTeamMembers(teamMembers.filter(member => member.id !== id));
     toast({
       title: "Team Member Removed",
-      description: "Team member has been removed from your organization.",
+      description: `${member?.name} has been removed from your team.`,
+    });
+  };
+
+  const handleToggleMemberStatus = (id: string) => {
+    setTeamMembers(teamMembers.map(member => 
+      member.id === id 
+        ? { ...member, status: member.status === 'active' ? 'inactive' : 'active' }
+        : member
+    ));
+    toast({
+      title: "Status Updated",
+      description: "Team member status has been updated.",
     });
   };
 
@@ -185,10 +308,11 @@ const Settings = () => {
     const apiKey: ApiKey = {
       id: Date.now().toString(),
       name: newApiKey.name,
-      key: `dk_${Math.random().toString(36).substr(2, 9)}...`,
+      key: `dk_${Math.random().toString(36).substr(2, 20)}`,
       permissions: newApiKey.permissions,
       created: new Date().toISOString().split('T')[0],
-      lastUsed: 'Never'
+      lastUsed: 'Never',
+      isActive: true
     };
 
     setApiKeys([...apiKeys, apiKey]);
@@ -202,10 +326,30 @@ const Settings = () => {
   };
 
   const handleRevokeApiKey = (id: string) => {
-    setApiKeys(apiKeys.filter(key => key.id !== id));
+    const key = apiKeys.find(k => k.id === id);
+    setApiKeys(apiKeys.map(key => 
+      key.id === id ? { ...key, isActive: false } : key
+    ));
     toast({
       title: "API Key Revoked",
-      description: "API key has been revoked and is no longer valid.",
+      description: `${key?.name} has been revoked and is no longer valid.`,
+    });
+  };
+
+  const handleDeleteApiKey = (id: string) => {
+    const key = apiKeys.find(k => k.id === id);
+    setApiKeys(apiKeys.filter(key => key.id !== id));
+    toast({
+      title: "API Key Deleted",
+      description: `${key?.name} has been permanently deleted.`,
+    });
+  };
+
+  const handleCopyApiKey = (key: string) => {
+    navigator.clipboard.writeText(key);
+    toast({
+      title: "Copied to Clipboard",
+      description: "API key has been copied to your clipboard.",
     });
   };
 
@@ -216,6 +360,58 @@ const Settings = () => {
         ? prev.permissions.filter(p => p !== permission)
         : [...prev.permissions, permission]
     }));
+  };
+
+  const handleNotificationChange = (key: keyof NotificationSettings, value: boolean) => {
+    setNotifications(prev => ({ ...prev, [key]: value }));
+    toast({
+      title: "Notification Updated",
+      description: `${key.replace(/([A-Z])/g, ' $1').toLowerCase()} ${value ? 'enabled' : 'disabled'}.`,
+    });
+  };
+
+  const handleAppearanceChange = (key: keyof AppearanceSettings, value: any) => {
+    setAppearance(prev => ({ ...prev, [key]: value }));
+    toast({
+      title: "Appearance Updated",
+      description: `${key} has been updated.`,
+    });
+  };
+
+  const handleExportData = () => {
+    const data = {
+      profile: formData,
+      teamMembers,
+      apiKeys: apiKeys.map(key => ({ ...key, key: '***HIDDEN***' })), // Hide actual keys
+      notifications,
+      appearance,
+      exportDate: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `settings-export-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Data Exported",
+      description: "Your data has been exported successfully.",
+    });
+  };
+
+  const handleDeleteAccount = () => {
+    // In a real app, this would make an API call
+    localStorage.clear();
+    toast({
+      title: "Account Deletion Requested",
+      description: "Your account deletion request has been submitted.",
+      variant: "destructive"
+    });
   };
 
   return (
@@ -322,13 +518,40 @@ const Settings = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="timezone">Timezone</Label>
+                    <Label htmlFor="department">Department</Label>
                     <Input
+                      id="department"
+                      value={formData.department || ''}
+                      onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                      disabled={!isEditing}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input
+                      id="phone"
+                      value={formData.phone || ''}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      disabled={!isEditing}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="timezone">Timezone</Label>
+                    <select
                       id="timezone"
                       value={formData.timezone}
                       onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
                       disabled={!isEditing}
-                    />
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md bg-white disabled:bg-gray-50"
+                    >
+                      <option value="America/New_York">Eastern Time (ET)</option>
+                      <option value="America/Chicago">Central Time (CT)</option>
+                      <option value="America/Denver">Mountain Time (MT)</option>
+                      <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                      <option value="Europe/London">London (GMT)</option>
+                      <option value="Europe/Paris">Paris (CET)</option>
+                      <option value="Asia/Tokyo">Tokyo (JST)</option>
+                    </select>
                   </div>
                 </div>
                 
@@ -354,7 +577,7 @@ const Settings = () => {
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
                     <Shield className="h-5 w-5 mr-2 text-green-600" />
-                    Team Management
+                    Team Management ({teamMembers.length} members)
                   </div>
                   <Button
                     size="sm"
@@ -374,22 +597,22 @@ const Settings = () => {
                     <CardContent className="pt-6">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="new-name">Name</Label>
+                          <Label htmlFor="new-name">Name *</Label>
                           <Input
                             id="new-name"
                             value={newMember.name}
                             onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
-                            placeholder="Enter name"
+                            placeholder="Enter full name"
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="new-email">Email</Label>
+                          <Label htmlFor="new-email">Email *</Label>
                           <Input
                             id="new-email"
                             type="email"
                             value={newMember.email}
                             onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
-                            placeholder="Enter email"
+                            placeholder="Enter email address"
                           />
                         </div>
                         <div className="space-y-2">
@@ -401,8 +624,8 @@ const Settings = () => {
                             className="w-full px-3 py-2 border border-slate-300 rounded-md bg-white"
                           >
                             <option value="Employee">Employee</option>
-                            <option value="Admin">Admin</option>
                             <option value="Manager">Manager</option>
+                            <option value="Admin">Admin</option>
                           </select>
                         </div>
                       </div>
@@ -432,21 +655,35 @@ const Settings = () => {
                         <div>
                           <p className="font-medium text-slate-900">{member.name}</p>
                           <p className="text-sm text-slate-600">{member.email}</p>
+                          <p className="text-xs text-slate-500">Joined: {member.joinedDate}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <Badge variant={member.status === 'active' ? 'default' : 'secondary'}>
+                        <Badge 
+                          variant={member.status === 'active' ? 'default' : 'secondary'}
+                          className="cursor-pointer"
+                          onClick={() => handleToggleMemberStatus(member.id)}
+                        >
                           {member.status}
                         </Badge>
                         <Badge variant="outline">{member.role}</Badge>
-                        <span className="text-sm text-slate-500">{member.lastLogin}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRemoveTeamMember(member.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <span className="text-sm text-slate-500 min-w-[80px]">{member.lastLogin}</span>
+                        <div className="flex space-x-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditingMember(editingMember === member.id ? null : member.id)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRemoveTeamMember(member.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -480,12 +717,14 @@ const Settings = () => {
                         {key === 'weeklyReports' && 'Weekly summary of your activity'}
                         {key === 'securityAlerts' && 'Important security-related notifications'}
                         {key === 'marketingEmails' && 'Product updates and marketing content'}
+                        {key === 'smsNotifications' && 'SMS notifications for urgent alerts'}
+                        {key === 'desktopNotifications' && 'Desktop notifications when app is closed'}
                       </p>
                     </div>
                     <Switch
                       checked={value}
                       onCheckedChange={(checked) =>
-                        setNotifications({ ...notifications, [key]: checked })
+                        handleNotificationChange(key as keyof NotificationSettings, checked)
                       }
                     />
                   </div>
@@ -501,7 +740,7 @@ const Settings = () => {
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
                     <Key className="h-5 w-5 mr-2 text-purple-600" />
-                    API Keys
+                    API Keys ({apiKeys.filter(k => k.isActive).length} active)
                   </div>
                   <Button
                     size="sm"
@@ -521,7 +760,7 @@ const Settings = () => {
                     <CardContent className="pt-6">
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="api-name">Key Name</Label>
+                          <Label htmlFor="api-name">Key Name *</Label>
                           <Input
                             id="api-name"
                             value={newApiKey.name}
@@ -530,7 +769,7 @@ const Settings = () => {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Permissions</Label>
+                          <Label>Permissions *</Label>
                           <div className="flex flex-wrap gap-2">
                             {['read', 'write', 'delete', 'admin'].map((permission) => (
                               <Button
@@ -565,8 +804,20 @@ const Settings = () => {
                   {apiKeys.map((apiKey) => (
                     <div key={apiKey.id} className="flex items-center justify-between p-4 rounded-lg bg-white border border-slate-200">
                       <div>
-                        <p className="font-medium text-slate-900">{apiKey.name}</p>
-                        <p className="text-sm text-slate-600 font-mono">{apiKey.key}</p>
+                        <div className="flex items-center space-x-2">
+                          <p className="font-medium text-slate-900">{apiKey.name}</p>
+                          {!apiKey.isActive && <Badge variant="secondary">Revoked</Badge>}
+                        </div>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <p className="text-sm text-slate-600 font-mono">{apiKey.key}</p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleCopyApiKey(apiKey.key)}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
                         <div className="flex space-x-2 mt-2">
                           {apiKey.permissions.map((permission) => (
                             <Badge key={permission} variant="outline" className="text-xs">
@@ -578,15 +829,24 @@ const Settings = () => {
                       <div className="text-right">
                         <p className="text-sm text-slate-600">Created: {apiKey.created}</p>
                         <p className="text-sm text-slate-600">Last used: {apiKey.lastUsed}</p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-2"
-                          onClick={() => handleRevokeApiKey(apiKey.id)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Revoke
-                        </Button>
+                        <div className="flex space-x-2 mt-2">
+                          {apiKey.isActive && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRevokeApiKey(apiKey.id)}
+                            >
+                              Revoke
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteApiKey(apiKey.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -611,24 +871,65 @@ const Settings = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label>Theme</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button variant="outline" className="justify-start">
-                        Light
-                      </Button>
-                      <Button variant="outline" className="justify-start">
-                        Dark
-                      </Button>
+                    <div className="grid grid-cols-3 gap-2">
+                      {['light', 'dark', 'system'].map((theme) => (
+                        <Button
+                          key={theme}
+                          variant={appearance.theme === theme ? "default" : "outline"}
+                          className="justify-start capitalize"
+                          onClick={() => handleAppearanceChange('theme', theme)}
+                        >
+                          {theme}
+                        </Button>
+                      ))}
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Color Scheme</Label>
                     <div className="flex space-x-2">
-                      {['blue', 'green', 'purple', 'orange'].map((color) => (
+                      {[
+                        { color: 'blue', bg: 'bg-blue-500' },
+                        { color: 'green', bg: 'bg-green-500' },
+                        { color: 'purple', bg: 'bg-purple-500' },
+                        { color: 'orange', bg: 'bg-orange-500' }
+                      ].map(({ color, bg }) => (
                         <div
                           key={color}
-                          className={`w-8 h-8 rounded-full bg-${color}-500 cursor-pointer border-2 border-transparent hover:border-slate-300`}
+                          className={`w-8 h-8 rounded-full ${bg} cursor-pointer border-2 ${
+                            appearance.colorScheme === color ? 'border-slate-800' : 'border-transparent'
+                          } hover:border-slate-300`}
+                          onClick={() => handleAppearanceChange('colorScheme', color)}
                         />
                       ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Font Size</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { size: 'sm', label: 'Small' },
+                        { size: 'md', label: 'Medium' },
+                        { size: 'lg', label: 'Large' }
+                      ].map(({ size, label }) => (
+                        <Button
+                          key={size}
+                          variant={appearance.fontSize === size ? "default" : "outline"}
+                          className="justify-start"
+                          onClick={() => handleAppearanceChange('fontSize', size)}
+                        >
+                          {label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Sidebar</Label>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        checked={!appearance.sidebarCollapsed}
+                        onCheckedChange={(checked) => handleAppearanceChange('sidebarCollapsed', !checked)}
+                      />
+                      <span className="text-sm">Keep sidebar expanded</span>
                     </div>
                   </div>
                 </div>
@@ -649,6 +950,33 @@ const Settings = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center">
+                    <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
+                    <div>
+                      <h4 className="font-medium text-green-900">Data Management</h4>
+                      <p className="text-sm text-green-700">
+                        Export your data or manage your account information.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <Separator className="my-4 bg-green-200" />
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-green-900">Export Data</p>
+                        <p className="text-sm text-green-700">Download all your data in JSON format</p>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={handleExportData}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Export
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                   <div className="flex items-center">
                     <AlertTriangle className="h-5 w-5 text-red-600 mr-3" />
@@ -665,20 +993,10 @@ const Settings = () => {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-red-900">Export Data</p>
-                        <p className="text-sm text-red-700">Download all your data</p>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        Export
-                      </Button>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div>
                         <p className="font-medium text-red-900">Delete Account</p>
                         <p className="text-sm text-red-700">Permanently delete your account and all data</p>
                       </div>
-                      <Button variant="destructive" size="sm">
+                      <Button variant="destructive" size="sm" onClick={handleDeleteAccount}>
                         Delete Account
                       </Button>
                     </div>
