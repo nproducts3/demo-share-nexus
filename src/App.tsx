@@ -12,6 +12,8 @@ import UserManagement from "./pages/UserManagement";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
+import MySessions from "./pages/MySessions";
+import MyProgress from "./pages/MyProgress";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +34,8 @@ const App = () => (
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/notifications" element={<Notifications />} />
+                <Route path="/my-sessions" element={<MySessions />} />
+                <Route path="/progress" element={<MyProgress />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
