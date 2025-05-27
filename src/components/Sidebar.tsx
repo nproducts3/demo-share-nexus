@@ -3,9 +3,12 @@ import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Calendar, Users, User, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export const Sidebar: React.FC = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const adminMenuItems = [
     { icon: Calendar, label: 'Dashboard', href: '/' },
@@ -32,7 +35,12 @@ export const Sidebar: React.FC = () => {
           {menuItems.map((item, index) => (
             <button
               key={index}
-              className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+              onClick={() => navigate(item.href)}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                location.pathname === item.href
+                  ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                  : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+              }`}
             >
               <item.icon className="h-5 w-5" />
               <span>{item.label}</span>
