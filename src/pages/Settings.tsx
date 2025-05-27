@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -70,13 +69,6 @@ interface NotificationSettings {
   marketingEmails: boolean;
   smsNotifications: boolean;
   desktopNotifications: boolean;
-}
-
-interface AppearanceSettings {
-  theme: 'light' | 'dark' | 'system';
-  colorScheme: 'blue' | 'green' | 'purple' | 'orange';
-  fontSize: 'sm' | 'md' | 'lg';
-  sidebarCollapsed: boolean;
 }
 
 const Settings = () => {
@@ -168,16 +160,6 @@ const Settings = () => {
     };
   });
 
-  const [appearance, setAppearance] = useState<AppearanceSettings>(() => {
-    const saved = localStorage.getItem('appearanceSettings');
-    return saved ? JSON.parse(saved) : {
-      theme: 'light',
-      colorScheme: 'blue',
-      fontSize: 'md',
-      sidebarCollapsed: false,
-    };
-  });
-
   const [newMember, setNewMember] = useState({
     name: '',
     email: '',
@@ -210,10 +192,6 @@ const Settings = () => {
   useEffect(() => {
     localStorage.setItem('notificationSettings', JSON.stringify(notifications));
   }, [notifications]);
-
-  useEffect(() => {
-    localStorage.setItem('appearanceSettings', JSON.stringify(appearance));
-  }, [appearance]);
 
   const handleSaveProfile = () => {
     setIsEditing(false);
@@ -370,21 +348,12 @@ const Settings = () => {
     });
   };
 
-  const handleAppearanceChange = (key: keyof AppearanceSettings, value: any) => {
-    setAppearance(prev => ({ ...prev, [key]: value }));
-    toast({
-      title: "Appearance Updated",
-      description: `${key} has been updated.`,
-    });
-  };
-
   const handleExportData = () => {
     const data = {
       profile: formData,
       teamMembers,
       apiKeys: apiKeys.map(key => ({ ...key, key: '***HIDDEN***' })), // Hide actual keys
       notifications,
-      appearance,
       exportDate: new Date().toISOString()
     };
     
@@ -429,7 +398,7 @@ const Settings = () => {
 
         {/* Settings Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 bg-white border border-slate-200 p-1 rounded-xl">
+          <TabsList className="grid w-full grid-cols-5 bg-white border border-slate-200 p-1 rounded-xl">
             <TabsTrigger value="profile" className="flex items-center space-x-2">
               <User className="h-4 w-4" />
               <span>Profile</span>
@@ -445,10 +414,6 @@ const Settings = () => {
             <TabsTrigger value="api" className="flex items-center space-x-2">
               <Key className="h-4 w-4" />
               <span>API Keys</span>
-            </TabsTrigger>
-            <TabsTrigger value="appearance" className="flex items-center space-x-2">
-              <Palette className="h-4 w-4" />
-              <span>Appearance</span>
             </TabsTrigger>
             <TabsTrigger value="advanced" className="flex items-center space-x-2">
               <Database className="h-4 w-4" />
@@ -850,88 +815,6 @@ const Settings = () => {
                       </div>
                     </div>
                   ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Appearance Tab */}
-          <TabsContent value="appearance">
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-slate-50">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Palette className="h-5 w-5 mr-2 text-pink-600" />
-                  Appearance Settings
-                </CardTitle>
-                <CardDescription>
-                  Customize the look and feel of your dashboard
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label>Theme</Label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {['light', 'dark', 'system'].map((theme) => (
-                        <Button
-                          key={theme}
-                          variant={appearance.theme === theme ? "default" : "outline"}
-                          className="justify-start capitalize"
-                          onClick={() => handleAppearanceChange('theme', theme)}
-                        >
-                          {theme}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Color Scheme</Label>
-                    <div className="flex space-x-2">
-                      {[
-                        { color: 'blue', bg: 'bg-blue-500' },
-                        { color: 'green', bg: 'bg-green-500' },
-                        { color: 'purple', bg: 'bg-purple-500' },
-                        { color: 'orange', bg: 'bg-orange-500' }
-                      ].map(({ color, bg }) => (
-                        <div
-                          key={color}
-                          className={`w-8 h-8 rounded-full ${bg} cursor-pointer border-2 ${
-                            appearance.colorScheme === color ? 'border-slate-800' : 'border-transparent'
-                          } hover:border-slate-300`}
-                          onClick={() => handleAppearanceChange('colorScheme', color)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Font Size</Label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { size: 'sm', label: 'Small' },
-                        { size: 'md', label: 'Medium' },
-                        { size: 'lg', label: 'Large' }
-                      ].map(({ size, label }) => (
-                        <Button
-                          key={size}
-                          variant={appearance.fontSize === size ? "default" : "outline"}
-                          className="justify-start"
-                          onClick={() => handleAppearanceChange('fontSize', size)}
-                        >
-                          {label}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Sidebar</Label>
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        checked={!appearance.sidebarCollapsed}
-                        onCheckedChange={(checked) => handleAppearanceChange('sidebarCollapsed', !checked)}
-                      />
-                      <span className="text-sm">Keep sidebar expanded</span>
-                    </div>
-                  </div>
                 </div>
               </CardContent>
             </Card>
