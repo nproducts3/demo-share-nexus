@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
+import { useTheme } from '../contexts/ThemeContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,6 +81,7 @@ interface AppearanceSettings {
 
 const Settings = () => {
   const { toast } = useToast();
+  const { appearance, updateAppearance } = useTheme();
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
   
@@ -168,28 +169,6 @@ const Settings = () => {
     };
   });
 
-  const [appearance, setAppearance] = useState<AppearanceSettings>(() => {
-    const saved = localStorage.getItem('appearanceSettings');
-    return saved ? JSON.parse(saved) : {
-      theme: 'light',
-      colorScheme: 'blue',
-      fontSize: 'md',
-      sidebarCollapsed: false,
-    };
-  });
-
-  const [newMember, setNewMember] = useState({
-    name: '',
-    email: '',
-    role: 'Employee',
-    department: ''
-  });
-
-  const [newApiKey, setNewApiKey] = useState({
-    name: '',
-    permissions: [] as string[],
-  });
-
   const [showNewMemberForm, setShowNewMemberForm] = useState(false);
   const [showNewApiKeyForm, setShowNewApiKeyForm] = useState(false);
   const [editingMember, setEditingMember] = useState<string | null>(null);
@@ -210,10 +189,6 @@ const Settings = () => {
   useEffect(() => {
     localStorage.setItem('notificationSettings', JSON.stringify(notifications));
   }, [notifications]);
-
-  useEffect(() => {
-    localStorage.setItem('appearanceSettings', JSON.stringify(appearance));
-  }, [appearance]);
 
   const handleSaveProfile = () => {
     setIsEditing(false);
@@ -370,8 +345,8 @@ const Settings = () => {
     });
   };
 
-  const handleAppearanceChange = (key: keyof AppearanceSettings, value: any) => {
-    setAppearance(prev => ({ ...prev, [key]: value }));
+  const handleAppearanceChange = (key: keyof typeof appearance, value: any) => {
+    updateAppearance(key, value);
     toast({
       title: "Appearance Updated",
       description: `${key} has been updated.`,
@@ -419,17 +394,17 @@ const Settings = () => {
       <div className="space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent">
             Settings
           </h1>
-          <p className="text-slate-600 mt-2">
+          <p className="text-slate-600 dark:text-slate-400 mt-2">
             Manage your account, team, and application preferences
           </p>
         </div>
 
         {/* Settings Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 bg-white border border-slate-200 p-1 rounded-xl">
+          <TabsList className="grid w-full grid-cols-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-1 rounded-xl">
             <TabsTrigger value="profile" className="flex items-center space-x-2">
               <User className="h-4 w-4" />
               <span>Profile</span>
@@ -458,7 +433,7 @@ const Settings = () => {
 
           {/* Profile Tab */}
           <TabsContent value="profile">
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-slate-50">
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -572,7 +547,7 @@ const Settings = () => {
 
           {/* Team Tab */}
           <TabsContent value="team">
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-slate-50">
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -857,7 +832,7 @@ const Settings = () => {
 
           {/* Appearance Tab */}
           <TabsContent value="appearance">
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-slate-50">
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900">
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Palette className="h-5 w-5 mr-2 text-pink-600" />
@@ -896,8 +871,8 @@ const Settings = () => {
                         <div
                           key={color}
                           className={`w-8 h-8 rounded-full ${bg} cursor-pointer border-2 ${
-                            appearance.colorScheme === color ? 'border-slate-800' : 'border-transparent'
-                          } hover:border-slate-300`}
+                            appearance.colorScheme === color ? 'border-slate-800 dark:border-slate-200' : 'border-transparent'
+                          } hover:border-slate-300 dark:hover:border-slate-600`}
                           onClick={() => handleAppearanceChange('colorScheme', color)}
                         />
                       ))}
