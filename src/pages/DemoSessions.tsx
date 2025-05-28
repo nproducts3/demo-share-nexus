@@ -27,6 +27,7 @@ interface DemoSession {
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   prerequisites?: string;
   duration?: string;
+  type: 'Project-based' | 'Product-based';
 }
 
 const DemoSessions = () => {
@@ -38,6 +39,7 @@ const DemoSessions = () => {
   const [difficultyFilter, setDifficultyFilter] = useState('all');
   const [selectedSessions, setSelectedSessions] = useState<string[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingType, setEditingType] = useState<string | null>(null);
 
   const [demoSessions, setDemoSessions] = useState<DemoSession[]>([
     {
@@ -54,7 +56,8 @@ const DemoSessions = () => {
       location: 'Conference Room A',
       difficulty: 'Advanced',
       prerequisites: 'Basic React knowledge',
-      duration: '120'
+      duration: '120',
+      type: 'Project-based'
     },
     {
       id: '2',
@@ -70,7 +73,8 @@ const DemoSessions = () => {
       location: 'Main Hall',
       difficulty: 'Intermediate',
       prerequisites: 'JavaScript fundamentals',
-      duration: '90'
+      duration: '90',
+      type: 'Product-based'
     },
     {
       id: '3',
@@ -86,7 +90,8 @@ const DemoSessions = () => {
       location: 'Tech Lab',
       difficulty: 'Advanced',
       prerequisites: 'Node.js basics',
-      duration: '150'
+      duration: '150',
+      type: 'Project-based'
     },
     {
       id: '4',
@@ -101,7 +106,8 @@ const DemoSessions = () => {
       status: 'upcoming',
       location: 'Training Room 1',
       difficulty: 'Beginner',
-      duration: '180'
+      duration: '180',
+      type: 'Product-based'
     },
     {
       id: '5',
@@ -117,7 +123,8 @@ const DemoSessions = () => {
       location: 'Auditorium',
       difficulty: 'Intermediate',
       prerequisites: 'Basic Linux knowledge',
-      duration: '240'
+      duration: '240',
+      type: 'Project-based'
     }
   ]);
 
@@ -154,6 +161,25 @@ const DemoSessions = () => {
       'Advanced': 'bg-red-100 text-red-800'
     };
     return <Badge className={colors[difficulty as keyof typeof colors]}>{difficulty}</Badge>;
+  };
+
+  const getTypeBadge = (type: string) => {
+    const colors = {
+      'Project-based': 'bg-indigo-100 text-indigo-800',
+      'Product-based': 'bg-emerald-100 text-emerald-800'
+    };
+    return <Badge className={colors[type as keyof typeof colors]}>{type}</Badge>;
+  };
+
+  const handleTypeEdit = (sessionId: string, newType: 'Project-based' | 'Product-based') => {
+    setDemoSessions(prev => prev.map(session => 
+      session.id === sessionId ? { ...session, type: newType } : session
+    ));
+    setEditingType(null);
+    toast({
+      title: "Type Updated",
+      description: "Session type has been updated successfully.",
+    });
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -194,6 +220,7 @@ const DemoSessions = () => {
       ...sessionData,
       id: Date.now().toString(),
       createdBy: 'Current Admin',
+      type: 'Project-based' // Default type
     };
     
     setDemoSessions(prev => [...prev, newSession]);
@@ -240,9 +267,9 @@ const DemoSessions = () => {
 
   const exportSessions = () => {
     const csvContent = "data:text/csv;charset=utf-8," + 
-      "Title,Technology,Date,Time,Status,Attendees,Location,Difficulty,Duration,Prerequisites\n" +
+      "Title,Type,Technology,Date,Time,Status,Attendees,Location,Difficulty,Duration,Prerequisites\n" +
       filteredSessions.map(session => 
-        `"${session.title}","${session.technology}","${session.date}","${session.time}","${session.status}","${session.attendees}/${session.maxAttendees}","${session.location}","${session.difficulty}","${session.duration || 'N/A'}","${session.prerequisites || 'None'}"`
+        `"${session.title}","${session.type}","${session.technology}","${session.date}","${session.time}","${session.status}","${session.attendees}/${session.maxAttendees}","${session.location}","${session.difficulty}","${session.duration || 'N/A'}","${session.prerequisites || 'None'}"`
       ).join("\n");
     
     const encodedUri = encodeURI(csvContent);
@@ -439,6 +466,7 @@ const DemoSessions = () => {
                     />
                   </TableHead>
                   <TableHead>Session</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Technology</TableHead>
                   <TableHead>Date & Time</TableHead>
                   <TableHead>Attendees</TableHead>
@@ -469,6 +497,44 @@ const DemoSessions = () => {
                           <div className="text-xs text-gray-400">{session.duration} min</div>
                         )}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {editingType === session.id ? (
+                        <div className="flex items-center space-x-1">
+                          <Select
+                            value={session.type}
+                            onValueChange={(value) => handleTypeEdit(session.id, value as any)}
+                          >
+                            <SelectTrigger className="w-32 h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Project-based">Project-based</SelectItem>
+                              <SelectItem value="Product-based">Product-based</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 w-6 p-0"
+                            onClick={() => setEditingType(null)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-1">
+                          {getTypeBadge(session.type)}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 w-6 p-0"
+                            onClick={() => setEditingType(session.id)}
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{session.technology}</Badge>

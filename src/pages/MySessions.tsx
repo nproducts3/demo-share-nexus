@@ -27,6 +27,7 @@ interface MySession {
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   rating?: number;
   feedback?: string;
+  type: 'Project-based' | 'Product-based';
 }
 
 const MySessions = () => {
@@ -38,6 +39,7 @@ const MySessions = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<MySession | null>(null);
+  const [editingType, setEditingType] = useState<string | null>(null);
   const [newSession, setNewSession] = useState<Partial<MySession>>({
     title: '',
     technology: '',
@@ -46,7 +48,8 @@ const MySessions = () => {
     description: '',
     maxAttendees: 10,
     location: '',
-    difficulty: 'Beginner'
+    difficulty: 'Beginner',
+    type: 'Project-based'
   });
 
   const [mySessions, setMySessions] = useState<MySession[]>([
@@ -62,6 +65,7 @@ const MySessions = () => {
       status: 'upcoming',
       location: 'Conference Room A',
       difficulty: 'Intermediate',
+      type: 'Project-based'
     },
     {
       id: '2',
@@ -76,7 +80,8 @@ const MySessions = () => {
       location: 'Tech Lab',
       difficulty: 'Advanced',
       rating: 4.8,
-      feedback: 'Excellent session with great examples!'
+      feedback: 'Excellent session with great examples!',
+      type: 'Product-based'
     }
   ]);
 
@@ -90,6 +95,25 @@ const MySessions = () => {
   });
 
   const technologies = Array.from(new Set(mySessions.map(session => session.technology)));
+
+  const getTypeBadge = (type: string) => {
+    const colors = {
+      'Project-based': 'bg-indigo-100 text-indigo-800',
+      'Product-based': 'bg-emerald-100 text-emerald-800'
+    };
+    return <Badge className={colors[type as keyof typeof colors]}>{type}</Badge>;
+  };
+
+  const handleTypeEdit = (sessionId: string, newType: 'Project-based' | 'Product-based') => {
+    setMySessions(prev => prev.map(session => 
+      session.id === sessionId ? { ...session, type: newType } : session
+    ));
+    setEditingType(null);
+    toast({
+      title: "Type Updated",
+      description: "Session type has been updated successfully.",
+    });
+  };
 
   const handleCreateSession = () => {
     if (!newSession.title || !newSession.technology || !newSession.date || !newSession.time) {
@@ -112,7 +136,8 @@ const MySessions = () => {
       maxAttendees: newSession.maxAttendees || 10,
       status: 'upcoming',
       location: newSession.location || 'TBD',
-      difficulty: newSession.difficulty as 'Beginner' | 'Intermediate' | 'Advanced'
+      difficulty: newSession.difficulty as 'Beginner' | 'Intermediate' | 'Advanced',
+      type: newSession.type as 'Project-based' | 'Product-based'
     };
 
     setMySessions([...mySessions, session]);
@@ -124,7 +149,8 @@ const MySessions = () => {
       description: '',
       maxAttendees: 10,
       location: '',
-      difficulty: 'Beginner'
+      difficulty: 'Beginner',
+      type: 'Project-based'
     });
     setIsCreateModalOpen(false);
     toast({
@@ -170,9 +196,9 @@ const MySessions = () => {
 
   const exportSessions = () => {
     const csvContent = "data:text/csv;charset=utf-8," + 
-      "Title,Technology,Date,Time,Status,Attendees,Location,Difficulty\n" +
+      "Title,Type,Technology,Date,Time,Status,Attendees,Location,Difficulty\n" +
       filteredSessions.map(session => 
-        `"${session.title}","${session.technology}","${session.date}","${session.time}","${session.status}","${session.attendees}/${session.maxAttendees}","${session.location}","${session.difficulty}"`
+        `"${session.title}","${session.type}","${session.technology}","${session.date}","${session.time}","${session.status}","${session.attendees}/${session.maxAttendees}","${session.location}","${session.difficulty}"`
       ).join("\n");
     
     const encodedUri = encodeURI(csvContent);
@@ -258,6 +284,18 @@ const MySessions = () => {
                       className="col-span-3"
                       placeholder="React, JavaScript, etc."
                     />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="type" className="text-right">Type</Label>
+                    <Select value={newSession.type} onValueChange={(value) => setNewSession({...newSession, type: value as any})}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Project-based">Project-based</SelectItem>
+                        <SelectItem value="Product-based">Product-based</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="date" className="text-right">Date</Label>
@@ -438,6 +476,7 @@ const MySessions = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Session</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Technology</TableHead>
                   <TableHead>Date & Time</TableHead>
                   <TableHead>Attendees</TableHead>
@@ -463,6 +502,44 @@ const MySessions = () => {
                           {session.location}
                         </div>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {editingType === session.id ? (
+                        <div className="flex items-center space-x-1">
+                          <Select
+                            value={session.type}
+                            onValueChange={(value) => handleTypeEdit(session.id, value as any)}
+                          >
+                            <SelectTrigger className="w-32 h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Project-based">Project-based</SelectItem>
+                              <SelectItem value="Product-based">Product-based</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 w-6 p-0"
+                            onClick={() => setEditingType(null)}
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-1">
+                          {getTypeBadge(session.type)}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 w-6 p-0"
+                            onClick={() => setEditingType(session.id)}
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{session.technology}</Badge>
@@ -554,6 +631,10 @@ const MySessions = () => {
                     <p>{selectedSession.technology}</p>
                   </div>
                   <div>
+                    <Label className="font-medium">Type</Label>
+                    <div className="mt-1">{getTypeBadge(selectedSession.type)}</div>
+                  </div>
+                  <div>
                     <Label className="font-medium">Difficulty</Label>
                     <p>{selectedSession.difficulty}</p>
                   </div>
@@ -617,6 +698,21 @@ const MySessions = () => {
                     onChange={(e) => setSelectedSession({...selectedSession, technology: e.target.value})}
                     className="col-span-3"
                   />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-type" className="text-right">Type</Label>
+                  <Select 
+                    value={selectedSession.type} 
+                    onValueChange={(value) => setSelectedSession({...selectedSession, type: value as any})}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Project-based">Project-based</SelectItem>
+                      <SelectItem value="Product-based">Product-based</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="edit-date" className="text-right">Date</Label>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit, Save, X, Calendar, Clock, Users, MapPin, Star } from 'lucide-react';
@@ -33,6 +32,7 @@ interface SessionDetails {
   currentStatus: 'Planning' | 'In Progress' | 'Testing' | 'Completed' | 'On Hold';
   rating?: number;
   feedback?: string;
+  type: 'Project-based' | 'Product-based';
 }
 
 const SessionDetail = () => {
@@ -67,7 +67,8 @@ const SessionDetail = () => {
       numberOfBugs: 3,
       currentStatus: 'In Progress',
       rating: 4.5,
-      feedback: 'Great session with excellent examples and hands-on exercises.'
+      feedback: 'Great session with excellent examples and hands-on exercises.',
+      type: 'Project-based'
     };
     setSession(mockSession);
     setEditValues(mockSession);
@@ -132,6 +133,14 @@ const SessionDetail = () => {
       'Advanced': 'bg-red-100 text-red-800'
     };
     return <Badge className={colors[difficulty as keyof typeof colors]}>{difficulty}</Badge>;
+  };
+
+  const getTypeBadge = (type: string) => {
+    const colors = {
+      'Project-based': 'bg-indigo-100 text-indigo-800',
+      'Product-based': 'bg-emerald-100 text-emerald-800'
+    };
+    return <Badge className={colors[type as keyof typeof colors]}>{type}</Badge>;
   };
 
   const renderEditableField = (field: string, value: any, type: 'text' | 'number' | 'textarea' | 'select' = 'text', options?: string[]) => {
@@ -249,6 +258,53 @@ const SessionDetail = () => {
               <div>
                 <p className="text-sm font-medium text-gray-500 mb-1">Technology</p>
                 <Badge variant="outline">{session.technology}</Badge>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">Type</p>
+                {editingFields.has('type') ? (
+                  <div className="flex items-center space-x-2">
+                    <Select
+                      value={editValues.type || session.type}
+                      onValueChange={(value) => setEditValues(prev => ({ ...prev, type: value as any }))}
+                    >
+                      <SelectTrigger className="w-40">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Project-based">Project-based</SelectItem>
+                        <SelectItem value="Product-based">Product-based</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 w-8 p-0 text-green-600"
+                      onClick={() => saveField('type')}
+                    >
+                      <Save className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 w-8 p-0 text-red-600"
+                      onClick={() => cancelEditing('type')}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between w-40">
+                    {getTypeBadge(session.type)}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 w-8 p-0"
+                      onClick={() => startEditing('type')}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500 mb-1">Status</p>
