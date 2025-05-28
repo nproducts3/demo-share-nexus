@@ -1,5 +1,5 @@
-
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, Users, Plus, Search, Filter, Download, Trash2, Edit, Eye, MapPin, Star, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +30,7 @@ interface MySession {
 }
 
 const MySessions = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [technologyFilter, setTechnologyFilter] = useState('all');
@@ -203,6 +204,10 @@ const MySessions = () => {
       'Advanced': 'bg-red-100 text-red-800'
     };
     return <Badge className={colors[difficulty as keyof typeof colors]}>{difficulty}</Badge>;
+  };
+
+  const handleViewSessionDetail = (sessionId: string) => {
+    navigate(`/session/${sessionId}`);
   };
 
   return (
@@ -447,7 +452,12 @@ const MySessions = () => {
                   <TableRow key={session.id}>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{session.title}</div>
+                        <div 
+                          className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
+                          onClick={() => handleViewSessionDetail(session.id)}
+                        >
+                          {session.title}
+                        </div>
                         <div className="text-sm text-gray-500 flex items-center">
                           <MapPin className="h-3 w-3 mr-1" />
                           {session.location}
@@ -487,10 +497,7 @@ const MySessions = () => {
                           size="sm" 
                           variant="outline" 
                           className="h-8 w-8 p-0"
-                          onClick={() => {
-                            setSelectedSession(session);
-                            setIsViewModalOpen(true);
-                          }}
+                          onClick={() => handleViewSessionDetail(session.id)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>

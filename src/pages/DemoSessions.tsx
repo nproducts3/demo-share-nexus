@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, Users, Plus, Search, Download, Trash2, Edit, Eye, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,7 @@ interface DemoSession {
 }
 
 const DemoSessions = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -233,14 +235,7 @@ const DemoSessions = () => {
   };
 
   const handleViewSession = (sessionId: string) => {
-    const session = demoSessions.find(s => s.id === sessionId);
-    if (session) {
-      // Create a detailed view modal or navigate to session details
-      toast({
-        title: "Session Details",
-        description: `Viewing "${session.title}" - ${session.technology} session on ${new Date(session.date).toLocaleDateString()} at ${session.time}. Location: ${session.location}`,
-      });
-    }
+    navigate(`/session/${sessionId}`);
   };
 
   const exportSessions = () => {
@@ -463,7 +458,12 @@ const DemoSessions = () => {
                     </TableCell>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{session.title}</div>
+                        <div 
+                          className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
+                          onClick={() => handleViewSession(session.id)}
+                        >
+                          {session.title}
+                        </div>
                         <div className="text-sm text-gray-500">{session.location}</div>
                         {session.duration && (
                           <div className="text-xs text-gray-400">{session.duration} min</div>

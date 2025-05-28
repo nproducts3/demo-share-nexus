@@ -8,6 +8,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import Index from './pages/Index';
 import DemoSessions from './pages/DemoSessions';
+import SessionDetail from './pages/SessionDetail';
 import UserManagement from './pages/UserManagement';
 import UserProfile from './pages/UserProfile';
 import Analytics from './pages/Analytics';
@@ -29,6 +30,7 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/demo-sessions" element={<DemoSessions />} />
+                  <Route path="/session/:sessionId" element={<SessionDetail />} />
                   <Route path="/user-management" element={<UserManagement />} />
                   <Route path="/user-profile/:userId" element={<UserProfile />} />
                   <Route path="/analytics" element={<Analytics />} />
