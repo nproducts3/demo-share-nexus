@@ -48,7 +48,7 @@ const UserManagement = () => {
     const fetchMyUsers = async () => {
       try {
         setLoading(true);
-          const allUsers = await user.getAll();
+          const allUsers = await userApi.getAll();
         // In a real app, you'd filter by current user's created sessions
         // const userSessions = allSessions.filter(session => session.createdBy === 'Current Admin');
         setUsers(allUsers);
