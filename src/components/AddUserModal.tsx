@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { userApi } from '../services/api';
 
 interface AddUserModalProps {
   onAddUser: (user: any) => void;
@@ -15,6 +16,7 @@ interface AddUserModalProps {
 export const AddUserModal: React.FC<AddUserModalProps> = ({ onAddUser }) => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -25,7 +27,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({ onAddUser }) => {
     skillLevel: 'Beginner'
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name || !formData.email || !formData.department) {
@@ -37,32 +39,43 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({ onAddUser }) => {
       return;
     }
 
-    const newUser = {
-      id: Date.now().toString(),
-      ...formData,
-      joinDate: new Date().toISOString().split('T')[0],
-      lastLogin: new Date().toISOString().split('T')[0],
-      sessionsAttended: 0,
-      sessionsCreated: 0,
-      totalHours: 0
-    };
+    try {
+      setLoading(true);
+      const newUser = await userApi.create({
+        ...formData,
+        joinDate: new Date().toISOString().split('T')[0],
+        lastLogin: new Date().toISOString().split('T')[0],
+        sessionsAttended: 0,
+        sessionsCreated: 0,
+        totalHours: 0
+      });
 
-    onAddUser(newUser);
-    setOpen(false);
-    setFormData({
-      name: '',
-      email: '',
-      role: 'employee',
-      status: 'active',
-      department: '',
-      phone: '',
-      skillLevel: 'Beginner'
-    });
+      onAddUser(newUser);
+      setOpen(false);
+      setFormData({
+        name: '',
+        email: '',
+        role: 'employee',
+        status: 'active',
+        department: '',
+        phone: '',
+        skillLevel: 'Beginner'
+      });
 
-    toast({
-      title: "User Added",
-      description: `${newUser.name} has been added successfully.`,
-    });
+      toast({
+        title: "User Added",
+        description: `${newUser.name} has been added successfully.`,
+      });
+    } catch (error) {
+      console.error('Error creating user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create user. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -170,8 +183,8 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({ onAddUser }) => {
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit">
-              Add User
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Adding...' : 'Add User'}
             </Button>
           </div>
         </form>

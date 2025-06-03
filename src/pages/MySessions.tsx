@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, Users, Plus, Search, Filter, Download, Trash2, Edit, Eye, MapPin, Star, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, Users, Plus, Search, Filter, Download, Trash2, Edit, Eye, MapPin, Star, CheckCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,22 +12,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { Layout } from '../components/Layout';
+import { sessionApi, DemoSession } from '../services/api';
 
-interface MySession {
-  id: string;
-  title: string;
-  technology: string;
-  date: string;
-  time: string;
-  description: string;
-  attendees: number;
-  maxAttendees: number;
-  status: 'upcoming' | 'completed' | 'cancelled';
-  location: string;
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+interface MySession extends DemoSession {
   rating?: number;
   feedback?: string;
-  type: 'Project-based' | 'Product-based';
 }
 
 const MySessions = () => {
@@ -40,6 +29,8 @@ const MySessions = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<MySession | null>(null);
   const [editingType, setEditingType] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [mySessions, setMySessions] = useState<MySession[]>([]);
   const [newSession, setNewSession] = useState<Partial<MySession>>({
     title: '',
     technology: '',
@@ -52,38 +43,29 @@ const MySessions = () => {
     type: 'Project-based'
   });
 
-  const [mySessions, setMySessions] = useState<MySession[]>([
-    {
-      id: '1',
-      title: 'React Hooks Workshop',
-      technology: 'React',
-      date: '2024-01-20',
-      time: '14:00',
-      description: 'Comprehensive workshop on React Hooks including useState, useEffect, and custom hooks.',
-      attendees: 12,
-      maxAttendees: 15,
-      status: 'upcoming',
-      location: 'Conference Room A',
-      difficulty: 'Intermediate',
-      type: 'Project-based'
-    },
-    {
-      id: '2',
-      title: 'JavaScript ES6+ Features',
-      technology: 'JavaScript',
-      date: '2024-01-15',
-      time: '10:00',
-      description: 'Deep dive into modern JavaScript features and best practices.',
-      attendees: 8,
-      maxAttendees: 12,
-      status: 'completed',
-      location: 'Tech Lab',
-      difficulty: 'Advanced',
-      rating: 4.8,
-      feedback: 'Excellent session with great examples!',
-      type: 'Product-based'
-    }
-  ]);
+  // Fetch sessions on component mount (filter by current user's sessions)
+  useEffect(() => {
+    const fetchMySessions = async () => {
+      try {
+        setLoading(true);
+        const allSessions = await sessionApi.getAll();
+        // In a real app, you'd filter by current user's created sessions
+        const userSessions = allSessions.filter(session => session.createdBy === 'Current Admin');
+        setMySessions(userSessions);
+      } catch (error) {
+        console.error('Error fetching sessions:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch your sessions. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMySessions();
+  }, []);
 
   const filteredSessions = mySessions.filter(session => {
     const matchesSearch = session.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -104,18 +86,28 @@ const MySessions = () => {
     return <Badge className={colors[type as keyof typeof colors]}>{type}</Badge>;
   };
 
-  const handleTypeEdit = (sessionId: string, newType: 'Project-based' | 'Product-based') => {
-    setMySessions(prev => prev.map(session => 
-      session.id === sessionId ? { ...session, type: newType } : session
-    ));
-    setEditingType(null);
-    toast({
-      title: "Type Updated",
-      description: "Session type has been updated successfully.",
-    });
+  const handleTypeEdit = async (sessionId: string, newType: 'Project-based' | 'Product-based') => {
+    try {
+      await sessionApi.update(sessionId, { type: newType });
+      setMySessions(prev => prev.map(session => 
+        session.id === sessionId ? { ...session, type: newType } : session
+      ));
+      setEditingType(null);
+      toast({
+        title: "Type Updated",
+        description: "Session type has been updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error updating session type:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update session type. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleCreateSession = () => {
+  const handleCreateSession = async () => {
     if (!newSession.title || !newSession.technology || !newSession.date || !newSession.time) {
       toast({
         title: "Validation Error",
@@ -125,73 +117,112 @@ const MySessions = () => {
       return;
     }
 
-    const session: MySession = {
-      id: Date.now().toString(),
-      title: newSession.title!,
-      technology: newSession.technology!,
-      date: newSession.date!,
-      time: newSession.time!,
-      description: newSession.description || '',
-      attendees: 0,
-      maxAttendees: newSession.maxAttendees || 10,
-      status: 'upcoming',
-      location: newSession.location || 'TBD',
-      difficulty: newSession.difficulty as 'Beginner' | 'Intermediate' | 'Advanced',
-      type: newSession.type as 'Project-based' | 'Product-based'
-    };
+    try {
+      const session = await sessionApi.create({
+        title: newSession.title!,
+        technology: newSession.technology!,
+        date: newSession.date!,
+        time: newSession.time!,
+        description: newSession.description || '',
+        attendees: 0,
+        maxAttendees: newSession.maxAttendees || 10,
+        status: 'upcoming',
+        location: newSession.location || 'TBD',
+        difficulty: newSession.difficulty as 'Beginner' | 'Intermediate' | 'Advanced',
+        type: newSession.type as 'Project-based' | 'Product-based',
+        createdBy: 'Current Admin'
+      });
 
-    setMySessions([...mySessions, session]);
-    setNewSession({
-      title: '',
-      technology: '',
-      date: '',
-      time: '',
-      description: '',
-      maxAttendees: 10,
-      location: '',
-      difficulty: 'Beginner',
-      type: 'Project-based'
-    });
-    setIsCreateModalOpen(false);
-    toast({
-      title: "Session Created",
-      description: "Your demo session has been successfully created.",
-    });
+      setMySessions([...mySessions, session]);
+      setNewSession({
+        title: '',
+        technology: '',
+        date: '',
+        time: '',
+        description: '',
+        maxAttendees: 10,
+        location: '',
+        difficulty: 'Beginner',
+        type: 'Project-based'
+      });
+      setIsCreateModalOpen(false);
+      toast({
+        title: "Session Created",
+        description: "Your demo session has been successfully created.",
+      });
+    } catch (error) {
+      console.error('Error creating session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create session. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleEditSession = () => {
+  const handleEditSession = async () => {
     if (!selectedSession) return;
 
-    const updatedSessions = mySessions.map(session =>
-      session.id === selectedSession.id ? selectedSession : session
-    );
-    setMySessions(updatedSessions);
-    setIsEditModalOpen(false);
-    setSelectedSession(null);
-    toast({
-      title: "Session Updated",
-      description: "Your demo session has been successfully updated.",
-    });
+    try {
+      const updatedSession = await sessionApi.update(selectedSession.id, selectedSession);
+      const updatedSessions = mySessions.map(session =>
+        session.id === selectedSession.id ? updatedSession : session
+      );
+      setMySessions(updatedSessions);
+      setIsEditModalOpen(false);
+      setSelectedSession(null);
+      toast({
+        title: "Session Updated",
+        description: "Your demo session has been successfully updated.",
+      });
+    } catch (error) {
+      console.error('Error updating session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update session. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleDeleteSession = (sessionId: string) => {
-    const updatedSessions = mySessions.filter(session => session.id !== sessionId);
-    setMySessions(updatedSessions);
-    toast({
-      title: "Session Deleted",
-      description: "The demo session has been successfully deleted.",
-    });
+  const handleDeleteSession = async (sessionId: string) => {
+    try {
+      await sessionApi.delete(sessionId);
+      const updatedSessions = mySessions.filter(session => session.id !== sessionId);
+      setMySessions(updatedSessions);
+      toast({
+        title: "Session Deleted",
+        description: "The demo session has been successfully deleted.",
+      });
+    } catch (error) {
+      console.error('Error deleting session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete session. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleCancelSession = (sessionId: string) => {
-    const updatedSessions = mySessions.map(session =>
-      session.id === sessionId ? { ...session, status: 'cancelled' as const } : session
-    );
-    setMySessions(updatedSessions);
-    toast({
-      title: "Session Cancelled",
-      description: "The demo session has been cancelled.",
-    });
+  const handleCancelSession = async (sessionId: string) => {
+    try {
+      await sessionApi.update(sessionId, { status: 'cancelled' });
+      const updatedSessions = mySessions.map(session =>
+        session.id === sessionId ? { ...session, status: 'cancelled' as const } : session
+      );
+      setMySessions(updatedSessions);
+      toast({
+        title: "Session Cancelled",
+        description: "The demo session has been cancelled.",
+      });
+    } catch (error) {
+      console.error('Error cancelling session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel session. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const exportSessions = () => {
@@ -235,6 +266,16 @@ const MySessions = () => {
   const handleViewSessionDetail = (sessionId: string) => {
     navigate(`/session/${sessionId}`);
   };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Loading your sessions...</div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -524,7 +565,7 @@ const MySessions = () => {
                             className="h-6 w-6 p-0"
                             onClick={() => setEditingType(null)}
                           >
-                            <Edit className="h-3 w-3" />
+                            <X className="h-3 w-3" />
                           </Button>
                         </div>
                       ) : (

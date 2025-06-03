@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, Users, Plus, Search, Download, Trash2, Edit, Eye, Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Layout } from '../components/Layout';
 import { CreateSessionModal } from '../components/CreateSessionModal';
 import { useToast } from '@/hooks/use-toast';
+import { sessionApi, DemoSession } from '../services/api';
 
 interface DemoSession {
   id: string;
@@ -40,93 +41,30 @@ const DemoSessions = () => {
   const [selectedSessions, setSelectedSessions] = useState<string[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingType, setEditingType] = useState<string | null>(null);
+  const [demoSessions, setDemoSessions] = useState<DemoSession[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [demoSessions, setDemoSessions] = useState<DemoSession[]>([
-    {
-      id: '1',
-      title: 'React Hooks Deep Dive',
-      technology: 'React',
-      date: '2024-01-15',
-      time: '14:00',
-      description: 'Advanced concepts in React Hooks including custom hooks and performance optimization.',
-      createdBy: 'John Admin',
-      attendees: 8,
-      maxAttendees: 15,
-      status: 'upcoming',
-      location: 'Conference Room A',
-      difficulty: 'Advanced',
-      prerequisites: 'Basic React knowledge',
-      duration: '120',
-      type: 'Project-based'
-    },
-    {
-      id: '2',
-      title: 'TypeScript Best Practices',
-      technology: 'TypeScript',
-      date: '2024-01-10',
-      time: '10:00',
-      description: 'Exploring TypeScript patterns and best practices for large applications.',
-      createdBy: 'John Admin',
-      attendees: 12,
-      maxAttendees: 20,
-      status: 'completed',
-      location: 'Main Hall',
-      difficulty: 'Intermediate',
-      prerequisites: 'JavaScript fundamentals',
-      duration: '90',
-      type: 'Product-based'
-    },
-    {
-      id: '3',
-      title: 'Node.js Performance',
-      technology: 'Node.js',
-      date: '2024-01-20',
-      time: '16:00',
-      description: 'Optimizing Node.js applications for better performance.',
-      createdBy: 'Sarah Smith',
-      attendees: 0,
-      maxAttendees: 12,
-      status: 'upcoming',
-      location: 'Tech Lab',
-      difficulty: 'Advanced',
-      prerequisites: 'Node.js basics',
-      duration: '150',
-      type: 'Project-based'
-    },
-    {
-      id: '4',
-      title: 'Vue.js for Beginners',
-      technology: 'Vue.js',
-      date: '2024-01-25',
-      time: '09:00',
-      description: 'Introduction to Vue.js framework and its core concepts.',
-      createdBy: 'Mike Johnson',
-      attendees: 5,
-      maxAttendees: 18,
-      status: 'upcoming',
-      location: 'Training Room 1',
-      difficulty: 'Beginner',
-      duration: '180',
-      type: 'Product-based'
-    },
-    {
-      id: '5',
-      title: 'Docker Containerization',
-      technology: 'Docker',
-      date: '2024-01-05',
-      time: '13:00',
-      description: 'Learn containerization with Docker and best practices.',
-      createdBy: 'Sarah Smith',
-      attendees: 15,
-      maxAttendees: 15,
-      status: 'completed',
-      location: 'Auditorium',
-      difficulty: 'Intermediate',
-      prerequisites: 'Basic Linux knowledge',
-      duration: '240',
-      type: 'Project-based'
-    }
-  ]);
+  // Fetch sessions on component mount
+  useEffect(() => {
+    const fetchSessions = async () => {
+      try {
+        setLoading(true);
+        const sessions = await sessionApi.getAll();
+        setDemoSessions(sessions);
+      } catch (error) {
+        console.error('Error fetching sessions:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch sessions. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSessions();
+  }, [toast]);
 
   const filteredSessions = demoSessions.filter(session => {
     const matchesSearch = session.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -171,15 +109,25 @@ const DemoSessions = () => {
     return <Badge className={colors[type as keyof typeof colors]}>{type}</Badge>;
   };
 
-  const handleTypeEdit = (sessionId: string, newType: 'Project-based' | 'Product-based') => {
-    setDemoSessions(prev => prev.map(session => 
-      session.id === sessionId ? { ...session, type: newType } : session
-    ));
-    setEditingType(null);
-    toast({
-      title: "Type Updated",
-      description: "Session type has been updated successfully.",
-    });
+  const handleTypeEdit = async (sessionId: string, newType: 'Project-based' | 'Product-based') => {
+    try {
+      await sessionApi.update(sessionId, { type: newType });
+      setDemoSessions(prev => prev.map(session => 
+        session.id === sessionId ? { ...session, type: newType } : session
+      ));
+      setEditingType(null);
+      toast({
+        title: "Type Updated",
+        description: "Session type has been updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error updating session type:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update session type. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -198,66 +146,108 @@ const DemoSessions = () => {
     }
   };
 
-  const handleBulkAction = (action: string) => {
+  const handleBulkAction = async (action: string) => {
     const sessionTitles = demoSessions
       .filter(session => selectedSessions.includes(session.id))
       .map(session => session.title)
       .join(', ');
 
-    toast({
-      title: `Bulk Action: ${action}`,
-      description: `Applied to: ${sessionTitles}`,
-    });
-
     if (action === 'delete') {
-      setDemoSessions(prev => prev.filter(session => !selectedSessions.includes(session.id)));
-      setSelectedSessions([]);
+      try {
+        await Promise.all(selectedSessions.map(id => sessionApi.delete(id)));
+        setDemoSessions(prev => prev.filter(session => !selectedSessions.includes(session.id)));
+        setSelectedSessions([]);
+        toast({
+          title: "Sessions Deleted",
+          description: `Deleted sessions: ${sessionTitles}`,
+        });
+      } catch (error) {
+        console.error('Error deleting sessions:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete some sessions. Please try again.",
+          variant: "destructive"
+        });
+      }
+    } else {
+      toast({
+        title: `Bulk Action: ${action}`,
+        description: `Applied to: ${sessionTitles}`,
+      });
     }
   };
 
-  const handleCreateSession = (sessionData: any) => {
-    const newSession: DemoSession = {
-      ...sessionData,
-      id: Date.now().toString(),
-      createdBy: 'Current Admin',
-      type: 'Project-based' // Default type
-    };
-    
-    setDemoSessions(prev => [...prev, newSession]);
-    setIsCreateModalOpen(false);
-    
-    toast({
-      title: "Session Created",
-      description: `"${newSession.title}" has been created successfully.`,
-    });
+  const handleCreateSession = async (sessionData: any) => {
+    try {
+      const newSession = await sessionApi.create({
+        ...sessionData,
+        createdBy: 'Current Admin',
+        attendees: 0,
+        type: sessionData.type || 'Project-based'
+      });
+      
+      setDemoSessions(prev => [...prev, newSession]);
+      setIsCreateModalOpen(false);
+      
+      toast({
+        title: "Session Created",
+        description: `"${newSession.title}" has been created successfully.`,
+      });
+    } catch (error) {
+      console.error('Error creating session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create session. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleEditSession = (sessionId: string) => {
+  const handleEditSession = async (sessionId: string) => {
     const session = demoSessions.find(s => s.id === sessionId);
     if (session) {
-      // In a real app, this would open an edit modal with pre-filled data
       const updatedTitle = prompt('Edit session title:', session.title);
       if (updatedTitle && updatedTitle !== session.title) {
-        setDemoSessions(prev => prev.map(s => 
-          s.id === sessionId ? { ...s, title: updatedTitle } : s
-        ));
-        toast({
-          title: "Session Updated",
-          description: `"${session.title}" has been updated to "${updatedTitle}".`,
-        });
+        try {
+          await sessionApi.update(sessionId, { title: updatedTitle });
+          setDemoSessions(prev => prev.map(s => 
+            s.id === sessionId ? { ...s, title: updatedTitle } : s
+          ));
+          toast({
+            title: "Session Updated",
+            description: `Session title updated to "${updatedTitle}".`,
+          });
+        } catch (error) {
+          console.error('Error updating session:', error);
+          toast({
+            title: "Error",
+            description: "Failed to update session. Please try again.",
+            variant: "destructive"
+          });
+        }
       }
     }
   };
 
-  const handleDeleteSession = (sessionId: string) => {
+  const handleDeleteSession = async (sessionId: string) => {
     const session = demoSessions.find(s => s.id === sessionId);
     if (session && confirm(`Are you sure you want to delete "${session.title}"?`)) {
-      setDemoSessions(prev => prev.filter(s => s.id !== sessionId));
-      toast({
-        title: "Session Deleted",
-        description: `"${session.title}" has been deleted successfully.`,
-        variant: "destructive"
-      });
+      try {
+        await sessionApi.delete(sessionId);
+        setDemoSessions(prev => prev.filter(s => s.id !== sessionId));
+        toast({
+          title: "Session Deleted",
+          description: `"${session.title}" has been deleted successfully.`,
+          variant: "destructive"
+        });
+      } catch (error) {
+        console.error('Error deleting session:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete session. Please try again.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -293,6 +283,16 @@ const DemoSessions = () => {
     setDifficultyFilter('all');
     setSelectedSessions([]);
   };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Loading sessions...</div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -356,7 +356,7 @@ const DemoSessions = () => {
                 <div>
                   <p className="text-sm text-gray-600">Avg Attendance</p>
                   <p className="text-2xl font-bold">
-                    {Math.round(demoSessions.reduce((sum, s) => sum + (s.attendees / s.maxAttendees * 100), 0) / demoSessions.length)}%
+                    {demoSessions.length > 0 ? Math.round(demoSessions.reduce((sum, s) => sum + (s.attendees / s.maxAttendees * 100), 0) / demoSessions.length) : 0}%
                   </p>
                 </div>
                 <Filter className="h-8 w-8 text-orange-500" />
