@@ -13,24 +13,6 @@ import { CreateSessionModal } from '../components/CreateSessionModal';
 import { useToast } from '@/hooks/use-toast';
 import { sessionApi, DemoSession } from '../services/api';
 
-interface DemoSession {
-  id: string;
-  title: string;
-  technology: string;
-  date: string;
-  time: string;
-  description: string;
-  createdBy: string;
-  attendees: number;
-  maxAttendees: number;
-  status: 'upcoming' | 'completed' | 'cancelled';
-  location: string;
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
-  prerequisites?: string;
-  duration?: string;
-  type: 'Project-based' | 'Product-based';
-}
-
 const DemoSessions = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
