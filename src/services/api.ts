@@ -17,7 +17,7 @@ export interface DemoSession {
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   prerequisites?: string;
   duration?: string;
-  type: 'Project-based' | 'Product-based';
+    type: 'PROJECT_BASED' | 'PROJECT_BASED';
 }
 
 export interface User {
