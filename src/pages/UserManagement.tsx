@@ -13,6 +13,7 @@ import { Layout } from '../components/Layout';
 import { AddUserModal } from '../components/AddUserModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { userApi, DemoSession } from '../services/api';
 
 interface User {
   id: string;
@@ -131,6 +132,29 @@ const UserManagement = () => {
       phone: '+1 (555) 333-4444'
     }
   ]);
+
+    useEffect(() => {
+    const fetchMySessions = async () => {
+      try {
+        setLoading(true);
+          const allUsers = await user.getAll();
+        // In a real app, you'd filter by current user's created sessions
+        // const userSessions = allSessions.filter(session => session.createdBy === 'Current Admin');
+        setUsers(allUsers);
+      } catch (error) {
+        console.error('Error fetching Users:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch your Users. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMySessions();
+  }, []);
 
   const departments = Array.from(new Set(users.map(user => user.department)));
 
