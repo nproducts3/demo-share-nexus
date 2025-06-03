@@ -13,7 +13,6 @@ import { Layout } from '../components/Layout';
 import { AddUserModal } from '../components/AddUserModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { userApi, DemoSession } from '../services/api';
 
 interface User {
   id: string;
@@ -42,30 +41,96 @@ const UserManagement = () => {
   const [skillLevelFilter, setSkillLevelFilter] = useState('all');
 
   const [users, setUsers] = useState<User[]>([
+    {
+      id: '1',
+      name: 'John Admin',
+      email: 'admin@demo.com',
+      role: 'admin',
+      status: 'active',
+      joinDate: '2023-01-15',
+      lastLogin: '2024-01-12',
+      department: 'Engineering',
+      sessionsAttended: 25,
+      sessionsCreated: 15,
+      totalHours: 120,
+      skillLevel: 'Advanced',
+      phone: '+1 (555) 123-4567'
+    },
+    {
+      id: '2',
+      name: 'Jane Employee',
+      email: 'employee@demo.com',
+      role: 'employee',
+      status: 'active',
+      joinDate: '2023-06-10',
+      lastLogin: '2024-01-11',
+      department: 'Engineering',
+      sessionsAttended: 12,
+      sessionsCreated: 0,
+      totalHours: 48,
+      skillLevel: 'Intermediate',
+      phone: '+1 (555) 987-6543'
+    },
+    {
+      id: '3',
+      name: 'Alice Smith',
+      email: 'alice@demo.com',
+      role: 'employee',
+      status: 'active',
+      joinDate: '2023-09-20',
+      lastLogin: '2024-01-10',
+      department: 'Design',
+      sessionsAttended: 8,
+      sessionsCreated: 2,
+      totalHours: 32,
+      skillLevel: 'Beginner',
+      phone: '+1 (555) 456-7890'
+    },
+    {
+      id: '4',
+      name: 'Bob Wilson',
+      email: 'bob@demo.com',
+      role: 'employee',
+      status: 'inactive',
+      joinDate: '2023-03-05',
+      lastLogin: '2023-12-15',
+      department: 'Marketing',
+      sessionsAttended: 5,
+      sessionsCreated: 1,
+      totalHours: 20,
+      skillLevel: 'Beginner'
+    },
+    {
+      id: '5',
+      name: 'Sarah Johnson',
+      email: 'sarah@demo.com',
+      role: 'employee',
+      status: 'pending',
+      joinDate: '2024-01-01',
+      lastLogin: '2024-01-01',
+      department: 'Marketing',
+      sessionsAttended: 0,
+      sessionsCreated: 0,
+      totalHours: 0,
+      skillLevel: 'Beginner',
+      phone: '+1 (555) 111-2222'
+    },
+    {
+      id: '6',
+      name: 'Mike Davis',
+      email: 'mike@demo.com',
+      role: 'admin',
+      status: 'active',
+      joinDate: '2023-02-20',
+      lastLogin: '2024-01-09',
+      department: 'Operations',
+      sessionsAttended: 18,
+      sessionsCreated: 8,
+      totalHours: 85,
+      skillLevel: 'Advanced',
+      phone: '+1 (555) 333-4444'
+    }
   ]);
-
-    useEffect(() => {
-    const fetchMyUsers = async () => {
-      try {
-        setLoading(true);
-          const allUsers = await userApi.getAll();
-        // In a real app, you'd filter by current user's created sessions
-        // const userSessions = allSessions.filter(session => session.createdBy === 'Current Admin');
-        setUsers(allUsers);
-      } catch (error) {
-        console.error('Error fetching Users:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch your Users. Please try again.",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMyUsers();
-  }, []);
 
   const departments = Array.from(new Set(users.map(user => user.department)));
 
