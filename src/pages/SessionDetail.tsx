@@ -1,38 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Save, X, Calendar, Clock, Users, MapPin, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Layout } from '../components/Layout';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Edit, Save, X, Loader2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Layout } from '../components/Layout';
+import { sessionApi, type DemoSession } from '../services/api';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-interface SessionDetails {
-  id: string;
-  title: string;
-  technology: string;
-  date: string;
-  time: string;
-  description: string;
-  createdBy: string;
-  attendees: number;
-  maxAttendees: number;
-  status: 'upcoming' | 'completed' | 'cancelled';
-  location: string;
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
-  prerequisites?: string;
-  duration?: string;
-  sprintName: string;
-  storyPoints: number;
-  numberOfTasks: number;
-  numberOfBugs: number;
-  currentStatus: 'Planning' | 'In Progress' | 'Testing' | 'Completed' | 'On Hold';
-  rating?: number;
-  feedback?: string;
-  type: 'Project-based' | 'Product-based';
+interface ExtendedDemoSession extends DemoSession {
+  currentStatus?: 'Planning' | 'In Progress' | 'Testing' | 'Completed' | 'On Hold';
 }
 
 const SessionDetail = () => {
@@ -40,189 +22,179 @@ const SessionDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [session, setSession] = useState<SessionDetails | null>(null);
-  const [editingFields, setEditingFields] = useState<Set<string>>(new Set());
-  const [editValues, setEditValues] = useState<Partial<SessionDetails>>({});
+  const [session, setSession] = useState<ExtendedDemoSession | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState<{ [key: string]: boolean }>({});
+  const [editingFields, setEditingFields] = useState<{ [key: string]: boolean }>({});
+  const [editValues, setEditValues] = useState<Partial<ExtendedDemoSession>>({});
 
-  // Mock data - in a real app, this would come from an API
-  useEffect(() => {
-    const mockSession: SessionDetails = {
-      id: sessionId || '1',
-      title: 'React Hooks Deep Dive',
-      technology: 'React',
-      date: '2024-01-15',
-      time: '14:00',
-      description: 'Advanced concepts in React Hooks including custom hooks and performance optimization.',
-      createdBy: 'John Admin',
-      attendees: 8,
-      maxAttendees: 15,
-      status: 'upcoming',
-      location: 'Conference Room A',
-      difficulty: 'Advanced',
-      prerequisites: 'Basic React knowledge',
-      duration: '120',
-      sprintName: 'Sprint 2024-01',
-      storyPoints: 8,
-      numberOfTasks: 12,
-      numberOfBugs: 3,
-      currentStatus: 'In Progress',
-      rating: 4.5,
-      feedback: 'Great session with excellent examples and hands-on exercises.',
-      type: 'Project-based'
-    };
-    setSession(mockSession);
-    setEditValues(mockSession);
-  }, [sessionId]);
-
-  const startEditing = (field: string) => {
-    setEditingFields(prev => new Set([...prev, field]));
-  };
-
-  const cancelEditing = (field: string) => {
-    setEditingFields(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(field);
-      return newSet;
-    });
-    if (session) {
-      setEditValues(prev => ({ ...prev, [field]: session[field as keyof SessionDetails] }));
+  // Convert backend format to frontend format for currentStatus
+  const convertBackendToFrontend = (backendStatus: string): 'Planning' | 'In Progress' | 'Testing' | 'Completed' | 'On Hold' => {
+    switch (backendStatus) {
+      case 'In_Progress':
+        return 'In Progress';
+      case 'On_Hold':
+        return 'On Hold';
+      case 'Planning':
+        return 'Planning';
+      case 'Testing':
+        return 'Testing';
+      case 'Completed':
+        return 'Completed';
+      default:
+        return 'Planning';
     }
   };
 
-  const saveField = (field: string) => {
+  // Convert frontend format to backend format for currentStatus
+  const convertFrontendToBackend = (frontendStatus: 'Planning' | 'In Progress' | 'Testing' | 'Completed' | 'On Hold'): string => {
+    switch (frontendStatus) {
+      case 'In Progress':
+        return 'In_Progress';
+      case 'On Hold':
+        return 'On_Hold';
+      default:
+        return frontendStatus;
+    }
+  };
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      setIsLoading(true);
+      try {
+        if (!sessionId) {
+          throw new Error("Session ID is missing.");
+        }
+        const fetchedSession = await sessionApi.get(sessionId);
+
+        // Convert the API response to frontend format before setting state
+        const convertedSession: ExtendedDemoSession = {
+          ...fetchedSession,
+          currentStatus: fetchedSession.currentStatus ? convertBackendToFrontend(fetchedSession.currentStatus as string) : 'Planning'
+        };
+
+        setSession(convertedSession);
+        setEditValues(convertedSession);
+      } catch (error) {
+        console.error("Failed to fetch session:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load session details. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSession();
+  }, [sessionId, toast]);
+
+  const handleEdit = (field: string) => {
+    setEditingFields(prev => ({ ...prev, [field]: true }));
+  };
+
+  const handleCancel = (field: string) => {
+    setEditingFields(prev => {
+      const newState = { ...prev };
+      delete newState[field];
+      return newState;
+    });
+    setEditValues(session || {});
+  };
+
+  const handleSave = async (field: string) => {
     if (!session) return;
 
-    const updatedSession = { ...session, [field]: editValues[field as keyof SessionDetails] };
-    setSession(updatedSession);
-    setEditingFields(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(field);
-      return newSet;
-    });
+    console.log(`Saving field: ${field}`);
+    console.log('Current editValues:', editValues);
+    console.log('Current session:', session);
 
-    toast({
-      title: "Field Updated",
-      description: `${field.charAt(0).toUpperCase() + field.slice(1)} has been saved successfully.`,
-    });
-  };
+    try {
+      setIsSaving(prev => ({ ...prev, [field]: true }));
 
-  const getStatusBadge = (status: string) => {
-    const colors = {
-      'upcoming': 'bg-blue-100 text-blue-800 border-blue-300',
-      'completed': 'bg-green-100 text-green-800 border-green-300',
-      'cancelled': 'bg-red-100 text-red-800 border-red-300'
-    };
-    return <Badge className={colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'}>{status}</Badge>;
-  };
+      // Prepare the data to send to the API
+      let updateData: any = {};
+      
+      if (field === 'currentStatus') {
+        // Convert frontend format to backend format for API
+        const backendStatus = convertFrontendToBackend(editValues.currentStatus!);
+        updateData.currentStatus = backendStatus;
+        console.log('Converted status for API:', backendStatus);
+      } else {
+        updateData[field] = editValues[field as keyof typeof editValues];
+      }
 
-  const getCurrentStatusBadge = (status: string) => {
-    const colors = {
-      'Planning': 'bg-purple-100 text-purple-800',
-      'In Progress': 'bg-blue-100 text-blue-800',
-      'Testing': 'bg-yellow-100 text-yellow-800',
-      'Completed': 'bg-green-100 text-green-800',
-      'On Hold': 'bg-red-100 text-red-800'
-    };
-    return <Badge className={colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'}>{status}</Badge>;
-  };
+      console.log('Sending update data to API:', updateData);
 
-  const getDifficultyBadge = (difficulty: string) => {
-    const colors = {
-      'Beginner': 'bg-green-100 text-green-800',
-      'Intermediate': 'bg-yellow-100 text-yellow-800',
-      'Advanced': 'bg-red-100 text-red-800'
-    };
-    return <Badge className={colors[difficulty as keyof typeof colors]}>{difficulty}</Badge>;
-  };
+      // Call the API
+      const result = await sessionApi.update(session.id, updateData);
+      console.log('Received response from API:', result);
+      
+      // Convert the API response to frontend format before updating state
+      const convertedResult: Partial<ExtendedDemoSession> = {
+        ...result
+      };
+      
+      if (result.currentStatus) {
+        convertedResult.currentStatus = convertBackendToFrontend(result.currentStatus as string);
+      }
+      
+      // Update the session state with the converted response data
+      setSession(prev => {
+        if (!prev) return null;
+        const updatedSession: ExtendedDemoSession = {
+          ...prev,
+          ...convertedResult
+        };
+        console.log('Updated session state:', updatedSession);
+        return updatedSession;
+      });
 
-  const getTypeBadge = (type: string) => {
-    const colors = {
-      'Project-based': 'bg-indigo-100 text-indigo-800',
-      'Product-based': 'bg-emerald-100 text-emerald-800'
-    };
-    return <Badge className={colors[type as keyof typeof colors]}>{type}</Badge>;
-  };
+      // Update editValues to match the new session data
+      setEditValues(prev => ({
+        ...prev,
+        ...convertedResult
+      }));
 
-  const renderEditableField = (field: string, value: any, type: 'text' | 'number' | 'textarea' | 'select' = 'text', options?: string[]) => {
-    const isEditing = editingFields.has(field);
-    
-    if (!isEditing) {
-      return (
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-900">{value}</span>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 w-8 p-0"
-            onClick={() => startEditing(field)}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-        </div>
-      );
+      setEditingFields(prev => {
+        const newState = { ...prev };
+        delete newState[field];
+        return newState;
+      });
+
+      toast({
+        title: "Session Updated",
+        description: `${field.charAt(0).toUpperCase() + field.slice(1)} has been updated successfully.`,
+      });
+
+    } catch (error) {
+      console.error(`Failed to save ${field}:`, error);
+      toast({
+        title: "Error",
+        description: `Failed to update ${field}. Please try again.`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(prev => ({ ...prev, [field]: false }));
     }
-
-    return (
-      <div className="flex items-center space-x-2">
-        {type === 'textarea' ? (
-          <Textarea
-            value={editValues[field as keyof SessionDetails] || ''}
-            onChange={(e) => setEditValues(prev => ({ ...prev, [field]: e.target.value }))}
-            className="flex-1"
-          />
-        ) : type === 'select' && options ? (
-          <Select
-            value={editValues[field as keyof SessionDetails] as string || ''}
-            onValueChange={(value) => setEditValues(prev => ({ ...prev, [field]: value }))}
-          >
-            <SelectTrigger className="flex-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {options.map(option => (
-                <SelectItem key={option} value={option}>{option}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <Input
-            type={type}
-            value={editValues[field as keyof SessionDetails] || ''}
-            onChange={(e) => setEditValues(prev => ({ 
-              ...prev, 
-              [field]: type === 'number' ? parseInt(e.target.value) || 0 : e.target.value 
-            }))}
-            className="flex-1"
-          />
-        )}
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-8 w-8 p-0 text-green-600"
-          onClick={() => saveField(field)}
-        >
-          <Save className="h-4 w-4" />
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-8 w-8 p-0 text-red-600"
-          onClick={() => cancelEditing(field)}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-    );
   };
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </div>
+      </Layout>
+    );
+  }
 
   if (!session) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-gray-900">Loading...</h2>
-            <p className="text-gray-500">Please wait while we load the session details.</p>
-          </div>
+        <div className="flex items-center justify-center h-full">
+          <p className="text-lg">Session not found.</p>
         </div>
       </Layout>
     );
@@ -230,234 +202,300 @@ const SessionDetail = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/demo-sessions')}
-            className="flex items-center space-x-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Sessions</span>
+      <div className="space-y-8">
+        <div className="flex items-center mb-2">
+          <Button variant="ghost" onClick={() => navigate(-1)} className="mr-2">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Sessions
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">{session.title}</h1>
-            <p className="text-gray-600 mt-1">Session Details</p>
-          </div>
+          <h1 className="text-4xl font-bold text-gray-900 ml-2">{session.title}</h1>
         </div>
+        <div className="text-lg text-gray-500 mb-4">Session Details</div>
 
         {/* Session Overview */}
         <Card>
-          <CardHeader>
-            <CardTitle>Session Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <CardContent className="p-8">
+            <h2 className="text-2xl font-bold mb-6">Session Overview</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-4">
               <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">Technology</p>
-                <Badge variant="outline">{session.technology}</Badge>
+                <div className="text-gray-500 font-medium">Technology</div>
+                <Badge variant="outline" className="mt-1">{session.technology}</Badge>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">Type</p>
-                {editingFields.has('type') ? (
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      value={editValues.type || session.type}
-                      onValueChange={(value) => setEditValues(prev => ({ ...prev, type: value as any }))}
-                    >
-                      <SelectTrigger className="w-40">
-                        <SelectValue />
+                <div className="text-gray-500 font-medium">Type</div>
+                {editingFields['type'] ? (
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Select value={editValues.type || ''} onValueChange={(value) => setEditValues(prev => ({ ...prev, type: value as 'PROJECT_BASED' | 'PRODUCT_BASED' }))}>
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder={editValues.type || 'Select type'} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Project-based">Project-based</SelectItem>
-                        <SelectItem value="Product-based">Product-based</SelectItem>
+                        <SelectItem value="PROJECT_BASED">Project-based</SelectItem>
+                        <SelectItem value="PRODUCT_BASED">Product-based</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 w-8 p-0 text-green-600"
-                      onClick={() => saveField('type')}
-                    >
-                      <Save className="h-4 w-4" />
+                    <Button variant="ghost" size="sm" onClick={() => handleSave('type')} disabled={isSaving['type']}>
+                      {isSaving['type'] ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 w-8 p-0 text-red-600"
-                      onClick={() => cancelEditing('type')}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleCancel('type')}><X className="h-4 w-4" /></Button>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between w-40">
-                    {getTypeBadge(session.type)}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 w-8 p-0"
-                      onClick={() => startEditing('type')}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                  <div className="flex items-center mt-1">
+                    <Badge className="bg-indigo-100 text-indigo-800">{session.type === 'PROJECT_BASED' ? 'Project-based' : 'Product-based'}</Badge>
+                    <Button variant="ghost" size="sm" className="ml-2" onClick={() => handleEdit('type')}><Edit className="h-4 w-4" /></Button>
                   </div>
                 )}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">Status</p>
-                {getStatusBadge(session.status)}
+                <div className="text-gray-500 font-medium">Status</div>
+                <Badge className="bg-blue-100 text-blue-800 mt-1">{session.currentStatus || session.status}</Badge>
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">Difficulty</p>
-                {getDifficultyBadge(session.difficulty)}
-              </div>
-              <div className="flex items-center space-x-2">
-                <Calendar className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">{new Date(session.date).toLocaleDateString()}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Clock className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">{session.time}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <MapPin className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">{session.location}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Users className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">{session.attendees}/{session.maxAttendees} attendees</span>
-              </div>
-              {session.rating && (
+              <div className="col-span-1 md:col-span-2 flex items-center space-x-8 mt-4">
                 <div className="flex items-center space-x-2">
-                  <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                  <span className="text-sm">{session.rating}/5</span>
+                  <span className="text-gray-500"><span className="inline-block align-middle"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2Z" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></span> {session.date}</span>
+                  <span className="text-gray-500 ml-6"><span className="inline-block align-middle"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 6v6l4 2" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="12" r="10" stroke="#64748b" strokeWidth="2"/></svg></span> {session.time}</span>
                 </div>
-              )}
+                <div className="flex items-center space-x-2">
+                  <span className="text-gray-500"><span className="inline-block align-middle"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="9" cy="7" r="4" stroke="#64748b" strokeWidth="2"/></svg></span> {session.attendees} / {session.maxAttendees} attendees</span>
+                  <span className="text-gray-500 ml-6"><span className="inline-block align-middle"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 17.75l-6.16 3.24 1.18-6.88L2 9.76l6.92-1L12 2.5l3.08 6.26 6.92 1-5.02 4.35 1.18 6.88z" stroke="#fbbf24" strokeWidth="2" strokeLinejoin="round"/></svg></span> {session.rating ? `${session.rating}/5` : '-'}</span>
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="text-gray-500 font-medium">Difficulty</div>
+                <Badge className={session.difficulty === 'Advanced' ? 'bg-red-100 text-red-800' : session.difficulty === 'Intermediate' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}>{session.difficulty}</Badge>
+              </div>
+              <div className="mt-4">
+                <div className="text-gray-500 font-medium">Location</div>
+                <span className="inline-flex items-center"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 21s-6-5.686-6-10A6 6 0 0 1 18 11c0 4.314-6 10-6 10Z" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="11" r="2" stroke="#64748b" strokeWidth="2"/></svg></span> {session.location}</div>
             </div>
           </CardContent>
         </Card>
 
         {/* Sprint Information */}
         <Card>
-          <CardHeader>
-            <CardTitle>Sprint Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <CardContent className="p-8">
+            <h2 className="text-2xl font-bold mb-6">Sprint Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <p className="text-sm font-medium text-gray-500 mb-2">Sprint Name</p>
-                {renderEditableField('sprintName', session.sprintName)}
+                <div className="text-gray-500 font-medium">Sprint Name</div>
+                {editingFields['sprintName'] ? (
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Input
+                      value={editValues.sprintName || ''}
+                      onChange={e => setEditValues(prev => ({ ...prev, sprintName: e.target.value }))}
+                    />
+                    <Button variant="ghost" size="sm" onClick={() => handleSave('sprintName')} disabled={isSaving['sprintName']}>
+                      {isSaving['sprintName'] ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleCancel('sprintName')}><X className="h-4 w-4" /></Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center mt-1">
+                    <span>{session.sprintName || '-'}</span>
+                    <Button variant="ghost" size="sm" className="ml-2" onClick={() => handleEdit('sprintName')}><Edit className="h-4 w-4" /></Button>
+                  </div>
+                )}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500 mb-2">Story Points</p>
-                {renderEditableField('storyPoints', session.storyPoints, 'number')}
+                <div className="text-gray-500 font-medium">Story Points</div>
+                {editingFields['storyPoints'] ? (
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Input
+                      type="number"
+                      value={editValues.storyPoints || ''}
+                      onChange={e => setEditValues(prev => ({ ...prev, storyPoints: Number(e.target.value) }))}
+                    />
+                    <Button variant="ghost" size="sm" onClick={() => handleSave('storyPoints')} disabled={isSaving['storyPoints']}>
+                      {isSaving['storyPoints'] ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleCancel('storyPoints')}><X className="h-4 w-4" /></Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center mt-1">
+                    <span>{session.storyPoints || '-'}</span>
+                    <Button variant="ghost" size="sm" className="ml-2" onClick={() => handleEdit('storyPoints')}><Edit className="h-4 w-4" /></Button>
+                  </div>
+                )}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500 mb-2">Number of Tasks</p>
-                {renderEditableField('numberOfTasks', session.numberOfTasks, 'number')}
+                <div className="text-gray-500 font-medium">Number of Tasks</div>
+                {editingFields['numberOfTasks'] ? (
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Input
+                      type="number"
+                      value={editValues.numberOfTasks || ''}
+                      onChange={e => setEditValues(prev => ({ ...prev, numberOfTasks: Number(e.target.value) }))}
+                    />
+                    <Button variant="ghost" size="sm" onClick={() => handleSave('numberOfTasks')} disabled={isSaving['numberOfTasks']}>
+                      {isSaving['numberOfTasks'] ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleCancel('numberOfTasks')}><X className="h-4 w-4" /></Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center mt-1">
+                    <span>{session.numberOfTasks || '-'}</span>
+                    <Button variant="ghost" size="sm" className="ml-2" onClick={() => handleEdit('numberOfTasks')}><Edit className="h-4 w-4" /></Button>
+                  </div>
+                )}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500 mb-2">Number of Bugs</p>
-                {renderEditableField('numberOfBugs', session.numberOfBugs, 'number')}
+                <div className="text-gray-500 font-medium">Number of Bugs</div>
+                {editingFields['numberOfBugs'] ? (
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Input
+                      type="number"
+                      value={editValues.numberOfBugs || ''}
+                      onChange={e => setEditValues(prev => ({ ...prev, numberOfBugs: Number(e.target.value) }))}
+                    />
+                    <Button variant="ghost" size="sm" onClick={() => handleSave('numberOfBugs')} disabled={isSaving['numberOfBugs']}>
+                      {isSaving['numberOfBugs'] ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleCancel('numberOfBugs')}><X className="h-4 w-4" /></Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center mt-1">
+                    <span>{session.numberOfBugs || '-'}</span>
+                    <Button variant="ghost" size="sm" className="ml-2" onClick={() => handleEdit('numberOfBugs')}><Edit className="h-4 w-4" /></Button>
+                  </div>
+                )}
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Current Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Project Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div>
-              <p className="text-sm font-medium text-gray-500 mb-2">Current Status</p>
-              {editingFields.has('currentStatus') ? (
-                <div className="flex items-center space-x-2">
-                  <Select
-                    value={editValues.currentStatus || session.currentStatus}
-                    onValueChange={(value) => setEditValues(prev => ({ ...prev, currentStatus: value as any }))}
-                  >
-                    <SelectTrigger className="w-48">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Planning">Planning</SelectItem>
-                      <SelectItem value="In Progress">In Progress</SelectItem>
-                      <SelectItem value="Testing">Testing</SelectItem>
-                      <SelectItem value="Completed">Completed</SelectItem>
-                      <SelectItem value="On Hold">On Hold</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 w-8 p-0 text-green-600"
-                    onClick={() => saveField('currentStatus')}
-                  >
-                    <Save className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 w-8 p-0 text-red-600"
-                    onClick={() => cancelEditing('currentStatus')}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between w-48">
-                  {getCurrentStatusBadge(session.currentStatus)}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 w-8 p-0"
-                    onClick={() => startEditing('currentStatus')}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+              <div>
+                <div className="text-gray-500 font-medium">Current Status</div>
+                {editingFields['currentStatus'] ? (
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Select value={editValues.currentStatus || ''} onValueChange={value => setEditValues(prev => ({ ...prev, currentStatus: value as any }))}>
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder={editValues.currentStatus || 'Select status'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Planning">Planning</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="Testing">Testing</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
+                        <SelectItem value="On Hold">On Hold</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button variant="ghost" size="sm" onClick={() => handleSave('currentStatus')} disabled={isSaving['currentStatus']}>
+                      {isSaving['currentStatus'] ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleCancel('currentStatus')}><X className="h-4 w-4" /></Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center mt-1">
+                    <Badge className="bg-blue-100 text-blue-800">{session.currentStatus || '-'}</Badge>
+                    <Button variant="ghost" size="sm" className="ml-2" onClick={() => handleEdit('currentStatus')}><Edit className="h-4 w-4" /></Button>
+                  </div>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Session Details */}
         <Card>
-          <CardHeader>
-            <CardTitle>Session Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="p-8">
+            <h2 className="text-2xl font-bold mb-6">Session Details</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <p className="text-sm font-medium text-gray-500 mb-2">Description</p>
-                {renderEditableField('description', session.description, 'textarea')}
+                <div className="text-gray-500 font-medium">Description</div>
+                {editingFields['description'] ? (
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Textarea
+                      value={editValues.description || ''}
+                      onChange={e => setEditValues(prev => ({ ...prev, description: e.target.value }))}
+                    />
+                    <Button variant="ghost" size="sm" onClick={() => handleSave('description')} disabled={isSaving['description']}>
+                      {isSaving['description'] ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleCancel('description')}><X className="h-4 w-4" /></Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center mt-1">
+                    <span>{session.description || '-'}</span>
+                    <Button variant="ghost" size="sm" className="ml-2" onClick={() => handleEdit('description')}><Edit className="h-4 w-4" /></Button>
+                  </div>
+                )}
               </div>
-              {session.prerequisites && (
-                <div>
-                  <p className="text-sm font-medium text-gray-500 mb-2">Prerequisites</p>
-                  {renderEditableField('prerequisites', session.prerequisites, 'textarea')}
-                </div>
-              )}
-              {session.feedback && (
-                <div>
-                  <p className="text-sm font-medium text-gray-500 mb-2">Feedback</p>
-                  {renderEditableField('feedback', session.feedback, 'textarea')}
-                </div>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 mb-2">Duration (minutes)</p>
-                  {renderEditableField('duration', session.duration, 'number')}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500 mb-2">Created By</p>
-                  <span className="text-sm text-gray-900">{session.createdBy}</span>
-                </div>
+              <div>
+                <div className="text-gray-500 font-medium">Prerequisites</div>
+                {editingFields['prerequisites'] ? (
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Textarea
+                      value={editValues.prerequisites || ''}
+                      onChange={e => setEditValues(prev => ({ ...prev, prerequisites: e.target.value }))}
+                    />
+                    <Button variant="ghost" size="sm" onClick={() => handleSave('prerequisites')} disabled={isSaving['prerequisites']}>
+                      {isSaving['prerequisites'] ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleCancel('prerequisites')}><X className="h-4 w-4" /></Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center mt-1">
+                    <span>{session.prerequisites || '-'}</span>
+                    <Button variant="ghost" size="sm" className="ml-2" onClick={() => handleEdit('prerequisites')}><Edit className="h-4 w-4" /></Button>
+                  </div>
+                )}
+              </div>
+              <div>
+                <div className="text-gray-500 font-medium">Feedback</div>
+                {editingFields['feedback'] ? (
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Textarea
+                      value={editValues.feedback || ''}
+                      onChange={e => setEditValues(prev => ({ ...prev, feedback: e.target.value }))}
+                    />
+                    <Button variant="ghost" size="sm" onClick={() => handleSave('feedback')} disabled={isSaving['feedback']}>
+                      {isSaving['feedback'] ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleCancel('feedback')}><X className="h-4 w-4" /></Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center mt-1">
+                    <span>{session.feedback || '-'}</span>
+                    <Button variant="ghost" size="sm" className="ml-2" onClick={() => handleEdit('feedback')}><Edit className="h-4 w-4" /></Button>
+                  </div>
+                )}
+              </div>
+              <div>
+                <div className="text-gray-500 font-medium">Duration (minutes)</div>
+                {editingFields['duration'] ? (
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Input
+                      type="number"
+                      value={editValues.duration || ''}
+                      onChange={e => setEditValues(prev => ({ ...prev, duration: Number(e.target.value) }))}
+                    />
+                    <Button variant="ghost" size="sm" onClick={() => handleSave('duration')} disabled={isSaving['duration']}>
+                      {isSaving['duration'] ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleCancel('duration')}><X className="h-4 w-4" /></Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center mt-1">
+                    <span>{session.duration || '-'}</span>
+                    <Button variant="ghost" size="sm" className="ml-2" onClick={() => handleEdit('duration')}><Edit className="h-4 w-4" /></Button>
+                  </div>
+                )}
+              </div>
+              <div>
+                <div className="text-gray-500 font-medium">Created By</div>
+                {editingFields['createdBy'] ? (
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Input
+                      value={editValues.createdBy || ''}
+                      onChange={e => setEditValues(prev => ({ ...prev, createdBy: e.target.value }))}
+                    />
+                    <Button variant="ghost" size="sm" onClick={() => handleSave('createdBy')} disabled={isSaving['createdBy']}>
+                      {isSaving['createdBy'] ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleCancel('createdBy')}><X className="h-4 w-4" /></Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center mt-1">
+                    <span>{session.createdBy || '-'}</span>
+                    <Button variant="ghost" size="sm" className="ml-2" onClick={() => handleEdit('createdBy')}><Edit className="h-4 w-4" /></Button>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
