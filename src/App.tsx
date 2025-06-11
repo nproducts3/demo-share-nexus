@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
 import { AdminProvider } from './contexts/AdminContext';
 import { NotificationsProvider } from './contexts/NotificationsContext';
@@ -25,39 +26,51 @@ import ApiKeysSettings from './pages/settings/ApiKeys';
 import AdvancedSettings from './pages/settings/Advanced';
 import './App.css';
 
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
 function App() {
   return (
-    <AuthProvider>
-      <AdminProvider>
-        <NotificationsProvider>
-          <Router>
-            <SidebarProvider>
-              <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/20 flex w-full antialiased">
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/demo-sessions" element={<DemoSessions />} />
-                  <Route path="/session/:sessionId" element={<SessionDetail />} />
-                  <Route path="/user-management" element={<UserManagement />} />
-                  <Route path="/user-profile/:userId" element={<UserProfile />} />
-                  <Route path="/analytics" element={<Analytics />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/settings/profile" element={<ProfileSettings />} />
-                  <Route path="/settings/team" element={<TeamSettings />} />
-                  <Route path="/settings/notifications" element={<NotificationSettings />} />
-                  <Route path="/settings/api-keys" element={<ApiKeysSettings />} />
-                  <Route path="/settings/advanced" element={<AdvancedSettings />} />
-                  <Route path="/my-sessions" element={<MySessions />} />
-                  <Route path="/my-progress" element={<MyProgress />} />
-                  <Route path="/notifications" element={<Notifications />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-                <Toaster />
-              </div>
-            </SidebarProvider>
-          </Router>
-        </NotificationsProvider>
-      </AdminProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AdminProvider>
+          <NotificationsProvider>
+            <Router>
+              <SidebarProvider>
+                <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/20 flex w-full antialiased">
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/demo-sessions" element={<DemoSessions />} />
+                    <Route path="/session/:sessionId" element={<SessionDetail />} />
+                    <Route path="/user-management" element={<UserManagement />} />
+                    <Route path="/user-profile/:userId" element={<UserProfile />} />
+                    <Route path="/analytics" element={<Analytics />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/settings/profile" element={<ProfileSettings />} />
+                    <Route path="/settings/team" element={<TeamSettings />} />
+                    <Route path="/settings/notifications" element={<NotificationSettings />} />
+                    <Route path="/settings/api-keys" element={<ApiKeysSettings />} />
+                    <Route path="/settings/advanced" element={<AdvancedSettings />} />
+                    <Route path="/my-sessions" element={<MySessions />} />
+                    <Route path="/my-progress" element={<MyProgress />} />
+                    <Route path="/notifications" element={<Notifications />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                  <Toaster />
+                </div>
+              </SidebarProvider>
+            </Router>
+          </NotificationsProvider>
+        </AdminProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
