@@ -26,6 +26,17 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { useToast } from '@/hooks/use-toast';
 import { useAnalyticsData } from '../hooks/useAnalyticsData';
 import { useQueryClient } from '@tanstack/react-query';
+import { Value } from '@radix-ui/react-select';
+
+// Utility to extract total minutes from a string like '1h 41m' or '45m'
+function getSessionTimeMinutes(sessionTime: string): number {
+  if (!sessionTime) return 0;
+  const hourMatch = sessionTime.match(/(\d+)h/);
+  const minMatch = sessionTime.match(/(\d+)m/);
+  const hours = hourMatch ? parseInt(hourMatch[1], 10) : 0;
+  const minutes = minMatch ? parseInt(minMatch[1], 10) : 0;
+  return hours * 60 + minutes;
+}
 
 const Analytics = () => {
   const { toast } = useToast();
@@ -71,36 +82,40 @@ const Analytics = () => {
   const metrics = [
     {
       title: 'Total Sessions',
+      // value: `${analyticsData.totalSessions} / ${(analyticsData.totalSessions / 100).toFixed(1)}%`,
       value: analyticsData.totalSessions.toString(),
-      change: calculateChange(analyticsData.totalSessions, analyticsData.performanceTrends),
-      trend: calculateTrend(analyticsData.totalSessions, analyticsData.performanceTrends),
+      change: `${(analyticsData.totalSessions / 100).toFixed(2)}%`,
+      trend: '',
       icon: Calendar,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
     },
     {
       title: 'Active Users',
+      // value: `${analyticsData.activeUsers} / ${(analyticsData.activeUsers / 100).toFixed(1)}%`,
       value: analyticsData.activeUsers.toString(),
-      change: calculateChange(analyticsData.activeUsers, analyticsData.userEngagement),
-      trend: calculateTrend(analyticsData.activeUsers, analyticsData.userEngagement),
+      change: `${(analyticsData.activeUsers / 100).toFixed(2)}%`,
+      trend: '',
       icon: Users,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
     },
     {
       title: 'Avg Session Time',
-      value: analyticsData.averageSessionTime,
-      change: calculateTimeChange(analyticsData.averageSessionTime),
-      trend: calculateTimeTrend(analyticsData.averageSessionTime),
+      // value: `${analyticsData.averageSessionTime} / ${(getSessionTimeMinutes(analyticsData.averageSessionTime) / 100).toFixed(1)}%`,
+      value: analyticsData.averageSessionTime.toString(),
+      change: `${(getSessionTimeMinutes(analyticsData.averageSessionTime) / 100).toFixed(2)}%`,
+      trend: '',
       icon: Clock,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
     },
     {
       title: 'Conversion Rate',
-      value: `${analyticsData.conversionRate.toFixed(1)}%`,
-      change: calculateChange(analyticsData.conversionRate, analyticsData.performanceTrends),
-      trend: calculateTrend(analyticsData.conversionRate, analyticsData.performanceTrends),
+      // value: `${analyticsData.conversionRate} / ${(analyticsData.conversionRate / 100).toFixed(1)}%`,
+      value: analyticsData.conversionRate.toString(),
+      change: `${(analyticsData.conversionRate / 100).toFixed(2)}%`,
+      trend: '',
       icon: Target,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
