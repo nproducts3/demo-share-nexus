@@ -65,9 +65,8 @@ export const useAnalyticsData = () => {
     // Calculate average session time from completed sessions
     const averageSessionTime = calculateAverageSessionTime(sessions);
 
-    // Calculate conversion rate (completed sessions / total sessions)
-    const completedSessions = sessions.filter(session => session.status === 'completed').length;
-    const conversionRate = totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0;
+    // Calculate conversion rate
+    const conversionRate = calculateConversionRate(sessions);
 
     // Calculate performance trends (last 7 days)
     const performanceTrends = calculatePerformanceTrends(sessions);
@@ -96,22 +95,28 @@ export const useAnalyticsData = () => {
 };
 
 const calculateAverageSessionTime = (sessions: DemoSession[]): string => {
-  const completedSessions = sessions.filter(session => session.status === 'completed');
-  
-  if (completedSessions.length === 0) return '0m 0s';
+  // Get all sessions (not just completed ones)
+  const totalSessions = sessions.length;
+  if (totalSessions === 0) return '0m';
 
-  const totalMinutes = completedSessions.reduce((total, session) => {
-    return total + (session.duration || 60); // Default to 60 minutes if duration is not set
+  // Calculate total duration from all sessions
+  const totalDuration = sessions.reduce((total, session) => {
+    // Use duration if available, otherwise default to 60 minutes
+    const sessionDuration = session.duration || 60;
+    return total + sessionDuration;
   }, 0);
 
-  const averageMinutes = Math.round(totalMinutes / completedSessions.length);
-  const hours = Math.floor(averageMinutes / 60);
-  const minutes = averageMinutes % 60;
+  // Calculate average duration
+  const averageDuration = Math.round(totalDuration / totalSessions);
 
-  if (hours > 0) {
+  // Format the duration
+  if (averageDuration < 60) {
+    return `${averageDuration}m`;
+  } else {
+    const hours = Math.floor(averageDuration / 60);
+    const minutes = averageDuration % 60;
     return `${hours}h ${minutes}m`;
   }
-  return `${minutes}m 0s`;
 };
 
 const calculatePerformanceTrends = (sessions: DemoSession[]) => {
@@ -277,3 +282,38 @@ const getRelativeTime = (date: Date): string => {
   const diffInDays = Math.floor(diffInHours / 24);
   return `${diffInDays} days ago`;
 };
+const calculateConversionRate = (sessions: DemoSession[]): number => {
+  console.log('=== Conversion Rate Calculation ===');
+  console.log('Total sessions:', sessions.length);
+  
+  const totalSessions = sessions.length;
+  if (totalSessions === 0) {
+    console.log('No sessions found, returning 0');
+    return 0;
+  }
+
+  // Get sessions with ratings (completed sessions)
+  const ratedSessions = sessions.filter(session => session.rating && session.rating > 0);
+  console.log('Rated sessions:', ratedSessions.length);
+  console.log('Session ratings:', ratedSessions.map(s => s.rating));
+
+  // Calculate average rating
+  const totalRating = ratedSessions.reduce((sum, session) => sum + (session.rating || 0), 0);
+  const averageRating = ratedSessions.length > 0 ? totalRating / ratedSessions.length : 0;
+  console.log('Average rating:', averageRating);
+
+  // Calculate conversion rate based on rating
+  // Consider sessions with rating >= 4 as successful conversions
+  const successfulSessions = ratedSessions.filter(session => (session.rating || 0) >= 4).length;
+  const conversionRate = (successfulSessions / totalSessions) * 100;
+  console.log('Successful sessions:', successfulSessions);
+  console.log('Raw conversion rate:', conversionRate);
+
+  // Round to 1 decimal place
+  const roundedRate = Math.round(conversionRate * 10) / 10;
+  console.log('Final conversion rate:', roundedRate);
+  console.log('=== End Conversion Rate Calculation ===\n');
+
+  return roundedRate;
+};
+
