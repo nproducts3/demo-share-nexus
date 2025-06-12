@@ -3,6 +3,12 @@ import { Layout } from '../components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -13,7 +19,8 @@ import {
   Target,
   Activity,
   Download,
-  RefreshCw
+  RefreshCw,
+  ChevronDown
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
@@ -115,30 +122,73 @@ const Analytics = () => {
     });
   };
 
-  const handleExport = () => {
-    toast({
-      title: "Exporting Data",
-      description: "Exporting analytics data to CSV...",
-    });
-    
-    // Create CSV content based on current data
-    const csvContent = "data:text/csv;charset=utf-8," + 
-      "Metric,Value\n" +
-      `"Total Sessions","${analyticsData.totalSessions}"\n` +
-      `"Active Users","${analyticsData.activeUsers}"\n` +
-      `"Average Session Time","${analyticsData.averageSessionTime}"\n`;
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "analytics_data.csv");
+  const downloadExcel = (data: any[], filename: string, headers: string[]) => {
+    // Create CSV content (Excel can open CSV files)
+    const csvContent = [
+      headers.join(','),
+      ...data.map(row => headers.map(header => {
+        const value = row[header.toLowerCase().replace(/\s+/g, '')] || row[header] || '';
+        return `"${value}"`;
+      }).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${filename}.csv`);
+    link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleExportSessionOverview = () => {
+    const currentDate = new Date().toLocaleDateString();
+    const data = [{
+      Date: currentDate,
+      'Total Sessions': analyticsData.totalSessions,
+      'Active Users': analyticsData.activeUsers,
+      'Average Session Time': analyticsData.averageSessionTime,
+      'Conversion Rate': `${analyticsData.conversionRate.toFixed(1)}%`
+    }];
+    
+    downloadExcel(data, 'session_overview', ['Date', 'Total Sessions', 'Active Users', 'Average Session Time', 'Conversion Rate']);
     
     toast({
       title: "Export Complete",
-      description: "Analytics data exported successfully.",
+      description: "Session Overview data exported successfully.",
+    });
+  };
+
+  const handleExportPerformanceTrends = () => {
+    const data = analyticsData.performanceTrends.map(trend => ({
+      Date: trend.name,
+      'Active Sessions': trend.activeSessions,
+      'Cancelled Sessions': trend.cancelledSessions
+    }));
+    
+    downloadExcel(data, 'performance_trends', ['Date', 'Active Sessions', 'Cancelled Sessions']);
+    
+    toast({
+      title: "Export Complete",
+      description: "Performance Trends data exported successfully.",
+    });
+  };
+
+  const handleExportUserEngagement = () => {
+    const data = analyticsData.userEngagement.map(engagement => ({
+      Month: engagement.name,
+      Admins: engagement.admins,
+      Employees: engagement.employees,
+      'Inactive Users': engagement.inactive
+    }));
+    
+    downloadExcel(data, 'user_engagement', ['Month', 'Admins', 'Employees', 'Inactive Users']);
+    
+    toast({
+      title: "Export Complete",
+      description: "User Engagement data exported successfully.",
     });
   };
 
@@ -198,14 +248,29 @@ const Analytics = () => {
               Refresh
             </Button>
             
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleExport}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={handleExportSessionOverview}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Session Overview
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPerformanceTrends}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Performance Trends
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportUserEngagement}>
+                  <Download className="h-4 w-4 mr-2" />
+                  User Engagement
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
