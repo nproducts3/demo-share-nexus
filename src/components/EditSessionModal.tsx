@@ -126,10 +126,31 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title || !formData.technology || !formData.date || !formData.time) {
+    
+    // Check all required fields
+    const requiredFields = {
+      title: formData.title,
+      technology: formData.technology,
+      date: formData.date,
+      time: formData.time,
+      description: formData.description,
+      location: formData.location,
+      maxAttendees: formData.maxAttendees,
+      attendees: formData.attendees,
+      difficulty: formData.difficulty,
+      type: formData.type,
+      status: formData.status,
+      createdBy: formData.createdBy
+    };
+
+    const missingFields = Object.entries(requiredFields)
+      .filter(([_, value]) => !value)
+      .map(([key]) => key);
+
+    if (missingFields.length > 0) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields.",
+        description: `Please fill in all required fields: ${missingFields.join(', ')}`,
         variant: "destructive"
       });
       return;

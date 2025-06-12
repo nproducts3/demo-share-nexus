@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { sessionApi, userApi } from '../services/api';
@@ -8,6 +7,7 @@ interface AnalyticsData {
   totalSessions: number;
   activeUsers: number;
   averageSessionTime: string;
+  conversionRate: number;
   performanceTrends: Array<{
     name: string;
     activeSessions: number;
@@ -32,6 +32,7 @@ export const useAnalyticsData = () => {
     totalSessions: 0,
     activeUsers: 0,
     averageSessionTime: '0m 0s',
+    conversionRate: 0,
     performanceTrends: [],
     userEngagement: [],
     recentActivity: []
@@ -50,14 +51,23 @@ export const useAnalyticsData = () => {
   useEffect(() => {
     if (!sessions || !users) return;
 
-    // Calculate total sessions
+    // Calculate total sessions (all sessions regardless of status)
     const totalSessions = sessions.length;
 
-    // Calculate active users (status !== 'inactive')
-    const activeUsers = users.filter(user => user.status !== 'inactive').length;
+    // Calculate active users (users who have logged in within the last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const activeUsers = users.filter(user => {
+      const lastLogin = new Date(user.lastLogin);
+      return lastLogin >= thirtyDaysAgo;
+    }).length;
 
-    // Calculate average session time
+    // Calculate average session time from completed sessions
     const averageSessionTime = calculateAverageSessionTime(sessions);
+
+    // Calculate conversion rate (completed sessions / total sessions)
+    const completedSessions = sessions.filter(session => session.status === 'completed').length;
+    const conversionRate = totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0;
 
     // Calculate performance trends (last 7 days)
     const performanceTrends = calculatePerformanceTrends(sessions);
@@ -72,6 +82,7 @@ export const useAnalyticsData = () => {
       totalSessions,
       activeUsers,
       averageSessionTime,
+      conversionRate,
       performanceTrends,
       userEngagement,
       recentActivity
@@ -180,32 +191,38 @@ const calculateRecentActivity = (sessions: DemoSession[], users: User[]) => {
 
   // Add recent session activities
   sessions.forEach(session => {
+    // Parse the session date and time from the API
     const sessionDate = new Date(session.date);
+    const [hours, minutes] = session.time.split(':').map(Number);
+    sessionDate.setHours(hours, minutes, 0, 0);
+
     if (sessionDate >= currentWeekStart) {
-      const user = session.createdBy || 'Unknown User';
+      // Find the user who created the session
+      const creator = users.find(u => u.id === session.createdBy) || { name: session.createdBy || 'Unknown User' };
+      
       let action = '';
-      let status = '';
+      const status = session.status;
 
       switch (session.status) {
         case 'upcoming':
           action = `Scheduled ${session.technology} Demo`;
-          status = 'scheduled';
           break;
         case 'completed':
           action = `Completed ${session.technology} Demo`;
-          status = 'success';
           break;
         case 'cancelled':
           action = `Cancelled ${session.technology} Demo`;
-          status = 'cancelled';
+          break;
+        default:
+          action = `${session.status} ${session.technology} Demo`;
           break;
       }
 
       activities.push({
-        user,
+        user: creator.name,
         action,
         time: getRelativeTime(sessionDate),
-        status,
+        status: status,
         timestamp: sessionDate
       });
     }
@@ -213,24 +230,28 @@ const calculateRecentActivity = (sessions: DemoSession[], users: User[]) => {
 
   // Add recent user activities
   users.forEach(user => {
+    // Parse the actual dates from user data
     const joinDate = new Date(user.joinDate);
+    const lastLogin = new Date(user.lastLogin);
+
+    // Only add join activity if it's from this week
     if (joinDate >= currentWeekStart) {
       activities.push({
         user: user.name,
-        action: 'Joined the platform',
+        action: `Created new account in ${user.department}`,
         time: getRelativeTime(joinDate),
-        status: 'success',
+        status: user.status || 'active',
         timestamp: joinDate
       });
-    }
-
-    const lastLogin = new Date(user.lastLogin);
-    if (lastLogin >= currentWeekStart) {
+    } 
+    // Only add login activity if it's from this week AND not on the same day as join
+    else if (lastLogin >= currentWeekStart && 
+             lastLogin.toDateString() !== joinDate.toDateString()) {
       activities.push({
         user: user.name,
-        action: 'Logged in',
+        action: `Logged in from ${user.department}`,
         time: getRelativeTime(lastLogin),
-        status: 'active',
+        status: user.status || 'active',
         timestamp: lastLogin
       });
     }

@@ -384,7 +384,9 @@ const getTypeBadge = (type: string) => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Total Attendees</p>
-                  <p className="text-2xl font-bold">{demoSessions.reduce((sum, s) => sum + s.attendees, 0)}</p>
+                  <p className="text-2xl font-bold">
+                    {demoSessions.reduce((sum, session) => sum + session.attendees, 0)}
+                  </p>
                 </div>
                 <Users className="h-8 w-8 text-purple-500" />
               </div>
@@ -396,7 +398,13 @@ const getTypeBadge = (type: string) => {
                 <div>
                   <p className="text-sm text-gray-600">Avg Attendance</p>
                   <p className="text-2xl font-bold">
-                    {demoSessions.length > 0 ? Math.round(demoSessions.reduce((sum, s) => sum + (s.attendees / s.maxAttendees * 100), 0) / demoSessions.length) : 0}%
+                    {(() => {
+                      const totalAttendees = demoSessions.reduce((sum, session) => sum + session.attendees, 0);
+                      const totalMaxAttendees = demoSessions.reduce((sum, session) => sum + session.maxAttendees, 0);
+                      return totalMaxAttendees > 0 
+                        ? Math.round((totalAttendees / totalMaxAttendees) * 100) 
+                        : 0;
+                    })()}%
                   </p>
                 </div>
                 <Filter className="h-8 w-8 text-orange-500" />
@@ -428,17 +436,6 @@ const getTypeBadge = (type: string) => {
                   />
                 </div>
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="upcoming">Upcoming</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
               <Select value={technologyFilter} onValueChange={setTechnologyFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="All Technologies" />
@@ -510,7 +507,6 @@ const getTypeBadge = (type: string) => {
                   <TableHead>Technology</TableHead>
                   <TableHead>Date & Time</TableHead>
                   <TableHead>Attendees</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Difficulty</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -591,7 +587,6 @@ const getTypeBadge = (type: string) => {
                         <span>{session.maxAttendees}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{getStatusBadge(session.status)}</TableCell>
                     <TableCell>{getDifficultyBadge(session.difficulty)}</TableCell>
                     <TableCell>
                       <div className="flex space-x-1">

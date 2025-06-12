@@ -1,4 +1,3 @@
-
 import { BASE_URL } from './apiConfig';
 import { DemoSession, ApiError, ApiErrorResponse } from '../types/api';
 
@@ -45,10 +44,23 @@ export const sessionApi = {
     
     // Create properly typed object for the update
     const cleanedData: Partial<DemoSession> & { id: string } = {
-      id: id
+      id: id,
+      // Include all required fields
+      title: sessionData.title,
+      technology: sessionData.technology,
+      date: sessionData.date,
+      time: sessionData.time,
+      description: sessionData.description,
+      createdBy: sessionData.createdBy,
+      attendees: sessionData.attendees,
+      maxAttendees: sessionData.maxAttendees,
+      status: sessionData.status,
+      location: sessionData.location,
+      difficulty: sessionData.difficulty,
+      type: sessionData.type
     };
 
-    // Add only the fields that are present in the update
+    // Add optional fields if they are present
     Object.entries(sessionData).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
         // Convert values to the correct type based on the field
@@ -72,7 +84,6 @@ export const sessionApi = {
             (cleanedData as any)[key] = value as 'PROJECT_BASED' | 'PRODUCT_BASED';
             break;
           case 'currentStatus':
-            // Keep the backend format (with underscores)
             (cleanedData as any)[key] = value as string;
             break;
           case 'sprintName':

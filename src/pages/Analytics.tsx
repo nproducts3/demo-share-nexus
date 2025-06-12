@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Layout } from '../components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,6 +24,81 @@ const Analytics = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: analyticsData, isLoading } = useAnalyticsData();
+
+  // Helper functions to calculate changes and trends
+  const calculateChange = (current: number, historical: Array<{ activeSessions?: number; admins?: number; employees?: number }>) => {
+    if (historical.length < 2) return '0%';
+    const previous = historical[historical.length - 2];
+    const change = ((current - (previous.activeSessions || previous.admins || previous.employees || 0)) / (previous.activeSessions || previous.admins || previous.employees || 1)) * 100;
+    return `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
+  };
+
+  const calculateTrend = (current: number, historical: Array<{ activeSessions?: number; admins?: number; employees?: number }>) => {
+    if (historical.length < 2) return 'neutral';
+    const previous = historical[historical.length - 2];
+    return current >= (previous.activeSessions || previous.admins || previous.employees || 0) ? 'up' : 'down';
+  };
+
+  const calculateTimeChange = (current: string) => {
+    // Parse current time string (e.g., "1h 30m" or "45m")
+    const [hours, minutes] = current.split('h').map(part => {
+      const match = part.match(/(\d+)m/);
+      return match ? parseInt(match[1]) : 0;
+    });
+    const totalMinutes = (hours || 0) * 60 + (minutes || 0);
+    
+    // For demo purposes, we'll use a simple comparison
+    // In a real app, you'd compare with historical data
+    return totalMinutes > 60 ? '+5.0%' : '-2.0%';
+  };
+
+  const calculateTimeTrend = (current: string) => {
+    const [hours, minutes] = current.split('h').map(part => {
+      const match = part.match(/(\d+)m/);
+      return match ? parseInt(match[1]) : 0;
+    });
+    const totalMinutes = (hours || 0) * 60 + (minutes || 0);
+    return totalMinutes > 60 ? 'up' : 'down';
+  };
+
+  const metrics = [
+    {
+      title: 'Total Sessions',
+      value: analyticsData.totalSessions.toString(),
+      change: calculateChange(analyticsData.totalSessions, analyticsData.performanceTrends),
+      trend: calculateTrend(analyticsData.totalSessions, analyticsData.performanceTrends),
+      icon: Calendar,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+    },
+    {
+      title: 'Active Users',
+      value: analyticsData.activeUsers.toString(),
+      change: calculateChange(analyticsData.activeUsers, analyticsData.userEngagement),
+      trend: calculateTrend(analyticsData.activeUsers, analyticsData.userEngagement),
+      icon: Users,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+    },
+    {
+      title: 'Avg Session Time',
+      value: analyticsData.averageSessionTime,
+      change: calculateTimeChange(analyticsData.averageSessionTime),
+      trend: calculateTimeTrend(analyticsData.averageSessionTime),
+      icon: Clock,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+    },
+    {
+      title: 'Conversion Rate',
+      value: `${analyticsData.conversionRate.toFixed(1)}%`,
+      change: calculateChange(analyticsData.conversionRate, analyticsData.performanceTrends),
+      trend: calculateTrend(analyticsData.conversionRate, analyticsData.performanceTrends),
+      icon: Target,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
+    },
+  ];
 
   const handleRefresh = async () => {
     toast({
@@ -68,44 +142,26 @@ const Analytics = () => {
     });
   };
 
-  const metrics = [
-    {
-      title: 'Total Sessions',
-      value: analyticsData.totalSessions.toString(),
-      change: '+12.5%',
-      trend: 'up',
-      icon: Calendar,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-    },
-    {
-      title: 'Active Users',
-      value: analyticsData.activeUsers.toString(),
-      change: '+8.2%',
-      trend: 'up',
-      icon: Users,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-    },
-    {
-      title: 'Avg Session Time',
-      value: analyticsData.averageSessionTime,
-      change: '-2.1%',
-      trend: 'down',
-      icon: Clock,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
-    },
-    {
-      title: 'Conversion Rate',
-      value: '42.3%',
-      change: '+5.4%',
-      trend: 'up',
-      icon: Target,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
-    },
-  ];
+  const getActivityBadge = (status: string) => {
+    const badgeColors: Record<string, string> = {
+      // Session statuses
+      'upcoming': 'bg-blue-100 text-blue-800',
+      'completed': 'bg-green-100 text-green-800',
+      'cancelled': 'bg-red-100 text-red-800',
+      // User statuses
+      'active': 'bg-green-100 text-green-800',
+      'inactive': 'bg-gray-100 text-gray-800'
+    };
+
+    const colorClass = badgeColors[status.toLowerCase()] || 'bg-gray-100 text-gray-800';
+    const displayStatus = status.charAt(0).toUpperCase() + status.slice(1);
+
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClass}`}>
+        {displayStatus}
+      </span>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -311,14 +367,7 @@ const Analytics = () => {
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">
-                      <Badge variant={
-                        activity.status === 'success' ? 'default' :
-                        activity.status === 'active' ? 'secondary' :
-                        activity.status === 'cancelled' ? 'destructive' :
-                        'outline'
-                      }>
-                        {activity.status}
-                      </Badge>
+                      {getActivityBadge(activity.status)}
                       <span className="text-sm text-slate-500">{activity.time}</span>
                     </div>
                   </div>
