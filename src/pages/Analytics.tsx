@@ -144,16 +144,14 @@ const Analytics = () => {
   };
 
   const handleExportSessionOverview = () => {
-    const currentDate = new Date().toLocaleDateString();
     const data = [{
-      Date: currentDate,
       'Total Sessions': analyticsData.totalSessions,
       'Active Users': analyticsData.activeUsers,
       'Average Session Time': analyticsData.averageSessionTime,
       'Conversion Rate': `${analyticsData.conversionRate.toFixed(1)}%`
     }];
     
-    downloadExcel(data, 'session_overview', ['Date', 'Total Sessions', 'Active Users', 'Average Session Time', 'Conversion Rate']);
+    downloadExcel(data, 'session_overview', ['Total Sessions', 'Active Users', 'Average Session Time', 'Conversion Rate']);
     
     toast({
       title: "Export Complete",
@@ -162,13 +160,32 @@ const Analytics = () => {
   };
 
   const handleExportPerformanceTrends = () => {
-    const data = analyticsData.performanceTrends.map(trend => ({
-      Date: trend.name,
-      'Active Sessions': trend.activeSessions,
-      'Cancelled Sessions': trend.cancelledSessions
-    }));
+    // Create data for all 7 days of the week
+    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     
-    downloadExcel(data, 'performance_trends', ['Date', 'Active Sessions', 'Cancelled Sessions']);
+    const data = daysOfWeek.map(day => {
+      const existingData = analyticsData.performanceTrends.find(trend => {
+        // Convert short day names (Mon, Tue, etc.) to full names for comparison
+        const dayMap: { [key: string]: string } = {
+          'Mon': 'Monday',
+          'Tue': 'Tuesday', 
+          'Wed': 'Wednesday',
+          'Thu': 'Thursday',
+          'Fri': 'Friday',
+          'Sat': 'Saturday',
+          'Sun': 'Sunday'
+        };
+        return dayMap[trend.name] === day;
+      });
+
+      return {
+        Day: day,
+        'Active Sessions': existingData?.activeSessions || 0,
+        'Cancelled Sessions': existingData?.cancelledSessions || 0
+      };
+    });
+    
+    downloadExcel(data, 'performance_trends', ['Day', 'Active Sessions', 'Cancelled Sessions']);
     
     toast({
       title: "Export Complete",
@@ -177,12 +194,39 @@ const Analytics = () => {
   };
 
   const handleExportUserEngagement = () => {
-    const data = analyticsData.userEngagement.map(engagement => ({
-      Month: engagement.name,
-      Admins: engagement.admins,
-      Employees: engagement.employees,
-      'Inactive Users': engagement.inactive
-    }));
+    // Create data for all 12 months
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    const data = monthNames.map(monthName => {
+      const existingData = analyticsData.userEngagement.find(engagement => {
+        // Convert short month names (Jan, Feb, etc.) to full names for comparison
+        const monthMap: { [key: string]: string } = {
+          'Jan': 'January',
+          'Feb': 'February',
+          'Mar': 'March',
+          'Apr': 'April',
+          'May': 'May',
+          'Jun': 'June',
+          'Jul': 'July',
+          'Aug': 'August',
+          'Sep': 'September',
+          'Oct': 'October',
+          'Nov': 'November',
+          'Dec': 'December'
+        };
+        return monthMap[engagement.name] === monthName || engagement.name === monthName;
+      });
+
+      return {
+        Month: monthName,
+        Admins: existingData?.admins || 0,
+        Employees: existingData?.employees || 0,
+        'Inactive Users': existingData?.inactive || 0
+      };
+    });
     
     downloadExcel(data, 'user_engagement', ['Month', 'Admins', 'Employees', 'Inactive Users']);
     
