@@ -120,14 +120,19 @@ const calculateAverageSessionTime = (sessions: DemoSession[]): string => {
 };
 
 const calculatePerformanceTrends = (sessions: DemoSession[]) => {
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (6 - i));
-    return date;
-  });
+  // Get start of current week (Monday)
+  const today = new Date();
+  const day = today.getDay(); // 0 = Sunday, 1 = Monday
+  const diffToMonday = day === 0 ? -6 : 1 - day; // if Sunday, go back 6 days, else go to Monday
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + diffToMonday);
+  monday.setHours(0, 0, 0, 0);
 
-  return last7Days.map(date => {
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+  const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  return daysOfWeek.map((dayName, index) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + index);
     const dayString = date.toISOString().split('T')[0];
 
     const daySessions = sessions.filter(session => {
@@ -135,11 +140,11 @@ const calculatePerformanceTrends = (sessions: DemoSession[]) => {
       return sessionDate === dayString;
     });
 
-    const activeSessions = daySessions.filter(session => 
+    const activeSessions = daySessions.filter(session =>
       session.status === 'upcoming' || session.status === 'completed'
     ).length;
 
-    const cancelledSessions = daySessions.filter(session => 
+    const cancelledSessions = daySessions.filter(session =>
       session.status === 'cancelled'
     ).length;
 
@@ -152,20 +157,24 @@ const calculatePerformanceTrends = (sessions: DemoSession[]) => {
 };
 
 const calculateUserEngagement = (users: User[]) => {
-  const last6Months = Array.from({ length: 6 }, (_, i) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() - (5 - i));
+  // Generate months for the current year from Jan (0) to Dec (11)
+  const currentYear = new Date().getFullYear();
+  const monthsOfYear = Array.from({ length: 12 }, (_, i) => {
+    const date = new Date(currentYear, i, 1);
     return date;
   });
 
-  return last6Months.map(date => {
+  return monthsOfYear.map(date => {
+    const monthIndex = date.getMonth();
     const monthName = date.toLocaleDateString('en-US', { month: 'short' });
-    const monthString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
+    // Users whose joinDate falls exactly in this month of currentYear
     const monthUsers = users.filter(user => {
       const userJoinDate = new Date(user.joinDate);
-      const userMonthString = `${userJoinDate.getFullYear()}-${String(userJoinDate.getMonth() + 1).padStart(2, '0')}`;
-      return userMonthString <= monthString;
+      return (
+        userJoinDate.getFullYear() === currentYear &&
+        userJoinDate.getMonth() === monthIndex
+      );
     });
 
     const admins = monthUsers.filter(user => user.role.toLowerCase().includes('admin')).length;
