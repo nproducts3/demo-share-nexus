@@ -18,8 +18,24 @@ export const AdminDashboard: React.FC = () => {
     const fetchSessions = async () => {
       try {
         setIsLoadingData(true);
-        const sessions = await sessionApi.getAll();
-        setDemoSessions(Array.isArray(sessions) ? sessions : []);
+        let allSessions: DemoSession[] = [];
+        let page = 1;
+        let totalPages = 1;
+        do {
+          const response = await sessionApi.getAll(page, 100);
+          if (response && typeof response === 'object' && 'data' in response) {
+            allSessions = allSessions.concat(response.data || []);
+            totalPages = response.totalPages || 1;
+            page++;
+          } else if (Array.isArray(response)) {
+            allSessions = response;
+            totalPages = 1;
+            break;
+          } else {
+            break;
+          }
+        } while (page <= totalPages);
+        setDemoSessions(allSessions);
       } catch (error) {
         console.error('Error fetching sessions:', error);
         toast({

@@ -423,8 +423,8 @@ const DemoSessions = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Current Page</p>
-                  <p className="text-2xl font-bold">{currentPage} of {totalPages}</p>
+                  <p className="text-sm text-gray-600">Upcoming</p>
+                  <p className="text-2xl font-bold">{demoSessions.filter(s => s.status === 'upcoming').length}</p>
                 </div>
                 <Clock className="h-8 w-8 text-green-500" />
               </div>
@@ -434,8 +434,8 @@ const DemoSessions = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Page Size</p>
-                  <p className="text-2xl font-bold">{pageSize}</p>
+                  <p className="text-sm text-gray-600">Total Attendees</p>
+                  <p className="text-2xl font-bold">{demoSessions.reduce((sum, s) => sum + (s.attendees || 0), 0)}</p>
                 </div>
                 <Users className="h-8 w-8 text-purple-500" />
               </div>
@@ -445,8 +445,14 @@ const DemoSessions = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Showing</p>
-                  <p className="text-2xl font-bold">{demoSessions.length}</p>
+                  <p className="text-sm text-gray-600">Avg Attendance</p>
+                  <p className="text-2xl font-bold">
+                    {(() => {
+                      const totalAttendees = demoSessions.reduce((sum, s) => sum + (s.attendees || 0), 0);
+                      const totalMax = demoSessions.reduce((sum, s) => sum + (s.maxAttendees || 0), 0);
+                      return totalMax > 0 ? `${Math.round((totalAttendees / totalMax) * 100)}%` : '0%';
+                    })()}
+                  </p>
                 </div>
                 <Filter className="h-8 w-8 text-orange-500" />
               </div>
@@ -634,7 +640,7 @@ const DemoSessions = () => {
                         <TableCell>
                           <div className="flex items-center space-x-1">
                             <Users className="h-4 w-4 text-gray-400" />
-                            <span>{session.attendees || 0}/{session.maxAttendees}</span>
+                            <span>{session.maxAttendees}</span>
                           </div>
                         </TableCell>
                         <TableCell>{getStatusBadge(session.status)}</TableCell>
@@ -700,29 +706,24 @@ const DemoSessions = () => {
                     <span>Previous</span>
                   </Button>
                   
-                  <div className="flex items-center space-x-1">
-                    {[...Array(totalPages)].map((_, index) => {
-                      const page = index + 1;
-                      if (totalPages <= 7 || page <= 3 || page >= totalPages - 2 || Math.abs(page - currentPage) <= 1) {
+                  <Select
+                    value={currentPage.toString()}
+                    onValueChange={(value) => handlePageChange(parseInt(value))}
+                  >
+                    <SelectTrigger className="w-[100px]">
+                      <SelectValue placeholder={`Page ${currentPage}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[...Array(totalPages)].map((_, index) => {
+                        const page = index + 1;
                         return (
-                          <Button
-                            key={page}
-                            variant={currentPage === page ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handlePageChange(page)}
-                            className="w-8 h-8"
-                          >
-                            {page}
-                          </Button>
+                          <SelectItem key={page} value={page.toString()}>
+                            Page {page}
+                          </SelectItem>
                         );
-                      } else if (page === 4 && currentPage > 5) {
-                        return <span key={page} className="px-2">...</span>;
-                      } else if (page === totalPages - 3 && currentPage < totalPages - 4) {
-                        return <span key={page} className="px-2">...</span>;
-                      }
-                      return null;
-                    })}
-                  </div>
+                      })}
+                    </SelectContent>
+                  </Select>
 
                   <Button
                     variant="outline"

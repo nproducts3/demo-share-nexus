@@ -115,8 +115,28 @@ const SessionDetail = () => {
 
       // Prepare the data to send to the API
       let updateData: any = {};
-      
-      if (field === 'currentStatus') {
+
+      // Sprint Information fields
+      const sprintFields = ['sprintName', 'storyPoints', 'numberOfTasks', 'numberOfBugs'];
+      // Feedback fields
+      const feedbackFields = ['feedback'];
+
+      if (sprintFields.includes(field)) {
+        // Always send all sprint fields
+        sprintFields.forEach(f => {
+          updateData[f] = editValues[f as keyof typeof editValues] ?? session[f as keyof typeof session] ?? '';
+        });
+        console.log('Sprint updateData:', updateData);
+      } else if (feedbackFields.includes(field)) {
+        // Always send all feedback and sprint fields
+        feedbackFields.forEach(f => {
+          updateData[f] = editValues[f as keyof typeof editValues] ?? session[f as keyof typeof session] ?? '';
+        });
+        sprintFields.forEach(f => {
+          updateData[f] = editValues[f as keyof typeof editValues] ?? session[f as keyof typeof session] ?? '';
+        });
+        console.log('Feedback + Sprint updateData:', updateData);
+      } else if (field === 'currentStatus') {
         // Convert frontend format to backend format for API
         const backendStatus = convertFrontendToBackend(editValues.currentStatus!);
         updateData.currentStatus = backendStatus;

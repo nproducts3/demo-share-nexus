@@ -528,41 +528,52 @@ const UserManagement = () => {
                   </Table>
                 </ScrollArea>
 
-                {/* Pagination Controls */}
+                {/* Enhanced Pagination Controls */}
                 {totalPages > 1 && (
-                  <div className="mt-6 flex justify-center">
-                    <Pagination>
-                      <PaginationContent>
-                        <PaginationItem>
-                          <PaginationPrevious 
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            className={currentPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                          />
-                        </PaginationItem>
-                        
-                        {[...Array(totalPages)].map((_, index) => {
-                          const page = index + 1;
-                          return (
-                            <PaginationItem key={page}>
-                              <PaginationLink
-                                onClick={() => handlePageChange(page)}
-                                isActive={currentPage === page}
-                                className="cursor-pointer"
-                              >
-                                {page}
-                              </PaginationLink>
-                            </PaginationItem>
-                          );
-                        })}
-                        
-                        <PaginationItem>
-                          <PaginationNext 
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                          />
-                        </PaginationItem>
-                      </PaginationContent>
-                    </Pagination>
+                  <div className="mt-6 flex items-center justify-between">
+                    <div className="text-sm text-gray-700">
+                      {/* Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} users */}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage <= 1}
+                        className="flex items-center space-x-1"
+                      >
+                        <span>Previous</span>
+                      </Button>
+                      
+                      <Select
+                        value={currentPage.toString()}
+                        onValueChange={(value) => handlePageChange(parseInt(value))}
+                      >
+                        <SelectTrigger className="w-[100px]">
+                          <SelectValue placeholder={`Page ${currentPage}`} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[...Array(totalPages)].map((_, index) => {
+                            const page = index + 1;
+                            return (
+                              <SelectItem key={page} value={page.toString()}>
+                                Page {page}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage >= totalPages}
+                        className="flex items-center space-x-1"
+                      >
+                        <span>Next</span>
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>
