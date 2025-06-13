@@ -25,36 +25,34 @@ const UserManagement = () => {
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [skillLevelFilter, setSkillLevelFilter] = useState('all');
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [editLoading, setEditLoading] = useState(false);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Fetch users on component mount
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    const fetchUsers = async () => {
+      try {
+        setIsLoading(true);
+        const response = await userApi.getAll();
+        setUsers(Array.isArray(response) ? response : []);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch users. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // Function to fetch users
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const fetchedUsers = await userApi.getAll();
-      setUsers(fetchedUsers);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch users. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchUsers();
+  }, [toast]);
 
   const departments = Array.from(new Set(users.map(user => user.department)));
 
@@ -195,19 +193,17 @@ const UserManagement = () => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
-  const handleEditUser = (userId: string) => {
-    const user = users.find(u => u.id === userId);
-    if (!user) return;
+  const handleEditUser = (user: User) => {
     setEditingUser(user);
-    setEditModalOpen(true);
+    setIsEditModalOpen(true);
   };
 
   const handleEditUserSubmit = async (updatedUser: User) => {
     setEditLoading(true);
     try {
       const result = await userApi.update(updatedUser.id, updatedUser);
-      setUsers(prevUsers => prevUsers.map(u => u.id === updatedUser.id ? result : u));
-      setEditModalOpen(false);
+      setUsers(prev => Array.isArray(prev) ? prev.map(u => u.id === updatedUser.id ? result : u) : []);
+      setIsEditModalOpen(false);
       setEditingUser(null);
       toast({
         title: "Success",
@@ -225,12 +221,9 @@ const UserManagement = () => {
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    const user = users.find(u => u.id === userId);
-    if (user) {
-      setUserToDelete(user);
-      setDeleteModalOpen(true);
-    }
+  const handleDeleteUser = (user: User) => {
+    setUserToDelete(user);
+    setIsDeleteModalOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
@@ -239,8 +232,8 @@ const UserManagement = () => {
     setDeleteLoading(true);
     try {
       await userApi.delete(userToDelete.id);
-      setUsers(prev => prev.filter(u => u.id !== userToDelete.id));
-      setDeleteModalOpen(false);
+      setUsers(prev => Array.isArray(prev) ? prev.filter(u => u.id !== userToDelete.id) : []);
+      setIsDeleteModalOpen(false);
       setUserToDelete(null);
       toast({
         title: "User Deleted",
@@ -272,7 +265,7 @@ const UserManagement = () => {
   const adminUsers = users.filter(u => u.role === 'admin').length;
   const avgSessionsPerUser = users.length > 0 ? Math.round(users.reduce((sum, u) => sum + u.sessionsAttended, 0) / users.length) : 0;
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center h-64">
@@ -474,10 +467,10 @@ const UserManagement = () => {
                         <TableCell>{new Date(user.lastLogin).toLocaleString()}</TableCell>
                         <TableCell>
                           <div className="flex space-x-1">
-                            <Button size="sm" variant="outline" className="h-8 w-8 p-0" onClick={() => handleEditUser(user.id)}>
+                            <Button size="sm" variant="outline" className="h-8 w-8 p-0" onClick={() => handleEditUser(user)}>
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" variant="outline" className="h-8 w-8 p-0 text-red-600 hover:text-red-700" onClick={() => handleDeleteUser(user.id)}>
+                            <Button size="sm" variant="outline" className="h-8 w-8 p-0 text-red-600 hover:text-red-700" onClick={() => handleDeleteUser(user)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -628,15 +621,15 @@ const UserManagement = () => {
         </Tabs>
       </div>
       <EditUserModal
-        open={editModalOpen}
-        setOpen={setEditModalOpen}
+        open={isEditModalOpen}
+        setOpen={setIsEditModalOpen}
         user={editingUser}
         onEditUser={handleEditUserSubmit}
         loading={editLoading}
       />
       <DeleteConfirmationModal
-        open={deleteModalOpen}
-        setOpen={setDeleteModalOpen}
+        open={isDeleteModalOpen}
+        setOpen={setIsDeleteModalOpen}
         title="Delete User"
         description={`Are you sure you want to delete "${userToDelete?.name}"? This action cannot be undone.`}
         onConfirm={handleDeleteConfirm}

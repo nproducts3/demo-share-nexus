@@ -41,7 +41,7 @@ const DemoSessions = () => {
       try {
         setLoading(true);
         const sessions = await sessionApi.getAll();
-        setDemoSessions(sessions);
+        setDemoSessions(Array.isArray(sessions) ? sessions : []);
       } catch (error) {
         console.error('Error fetching sessions:', error);
         toast({
@@ -77,7 +77,7 @@ const DemoSessions = () => {
     }
   };
 
-  const filteredSessions = demoSessions.filter(session => {
+  const filteredSessions = Array.isArray(demoSessions) ? demoSessions.filter(session => {
     const matchesSearch = session.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          session.technology.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          session.location.toLowerCase().includes(searchTerm.toLowerCase());
@@ -86,9 +86,9 @@ const DemoSessions = () => {
     const matchesDifficulty = difficultyFilter === 'all' || session.difficulty === difficultyFilter;
     
     return matchesSearch && matchesStatus && matchesTechnology && matchesDifficulty;
-  });
+  }) : [];
 
-  const technologies = Array.from(new Set(demoSessions.map(session => session.technology)));
+  const technologies = Array.isArray(demoSessions) ? Array.from(new Set(demoSessions.map(session => session.technology))) : [];
 
   const getStatusBadge = (status: string) => {
     switch (status) {

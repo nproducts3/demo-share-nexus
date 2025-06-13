@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { sessionApi, userApi } from '../services/api';
 import { DemoSession, User } from '../types/api';
+import { useToast } from '@/components/ui/use-toast';
 
 interface AnalyticsData {
   totalSessions: number;
@@ -28,69 +29,80 @@ interface AnalyticsData {
 }
 
 export const useAnalyticsData = () => {
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({
-    totalSessions: 0,
-    activeUsers: 0,
-    averageSessionTime: '0m 0s',
-    conversionRate: 0,
-    performanceTrends: [],
-    userEngagement: [],
-    recentActivity: []
-  });
-
-  const { data: sessions, isLoading: sessionsLoading } = useQuery({
-    queryKey: ['sessions'],
-    queryFn: sessionApi.getAll,
-  });
-
-  const { data: users, isLoading: usersLoading } = useQuery({
-    queryKey: ['users'],
-    queryFn: userApi.getAll,
-  });
+  const [users, setUsers] = useState<User[]>([]);
+  const [sessions, setSessions] = useState<DemoSession[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (!sessions || !users) return;
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const [usersResponse, sessionsResponse] = await Promise.all([
+          userApi.getAll(),
+          sessionApi.getAll()
+        ]);
+        setUsers(Array.isArray(usersResponse) ? usersResponse : []);
+        setSessions(Array.isArray(sessionsResponse) ? sessionsResponse : []);
+      } catch (error) {
+        console.error('Error fetching analytics data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch analytics data. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    // Calculate total sessions (all sessions regardless of status)
-    const totalSessions = sessions.length;
+    fetchData();
+  }, [toast]);
 
-    // Calculate active users (users who have logged in within the last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const activeUsers = users.filter(user => {
-      const lastLogin = new Date(user.lastLogin);
-      return lastLogin >= thirtyDaysAgo;
-    }).length;
+  const userStats = {
+    totalUsers: Array.isArray(users) ? users.length : 0,
+    activeUsers: Array.isArray(users) ? users.filter(user => user.status === 'active').length : 0,
+    inactiveUsers: Array.isArray(users) ? users.filter(user => user.status === 'inactive').length : 0,
+    averageSessionsPerUser: Array.isArray(users) && users.length > 0 
+      ? Math.round(users.reduce((sum, user) => sum + user.sessionsAttended, 0) / users.length) 
+      : 0
+  };
 
-    // Calculate average session time from completed sessions
-    const averageSessionTime = calculateAverageSessionTime(sessions);
+  const sessionStats = {
+    totalSessions: Array.isArray(sessions) ? sessions.length : 0,
+    upcomingSessions: Array.isArray(sessions) ? sessions.filter(session => session.status === 'upcoming').length : 0,
+    completedSessions: Array.isArray(sessions) ? sessions.filter(session => session.status === 'completed').length : 0,
+    cancelledSessions: Array.isArray(sessions) ? sessions.filter(session => session.status === 'cancelled').length : 0
+  };
 
-    // Calculate conversion rate
-    const conversionRate = calculateConversionRate(sessions);
+  const technologyDistribution = Array.isArray(sessions) 
+    ? sessions.reduce((acc, session) => {
+        acc[session.technology] = (acc[session.technology] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)
+    : {};
 
-    // Calculate performance trends (last 7 days)
-    const performanceTrends = calculatePerformanceTrends(sessions);
+  const difficultyDistribution = Array.isArray(sessions)
+    ? sessions.reduce((acc, session) => {
+        acc[session.difficulty] = (acc[session.difficulty] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)
+    : {};
 
-    // Calculate user engagement (monthly)
-    const userEngagement = calculateUserEngagement(users);
-
-    // Calculate recent activity (current week)
-    const recentActivity = calculateRecentActivity(sessions, users);
-
-    setAnalyticsData({
-      totalSessions,
-      activeUsers,
-      averageSessionTime,
-      conversionRate,
-      performanceTrends,
-      userEngagement,
-      recentActivity
-    });
-  }, [sessions, users]);
+  const typeDistribution = Array.isArray(sessions)
+    ? sessions.reduce((acc, session) => {
+        acc[session.type] = (acc[session.type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)
+    : {};
 
   return {
-    data: analyticsData,
-    isLoading: sessionsLoading || usersLoading
+    userStats,
+    sessionStats,
+    technologyDistribution,
+    difficultyDistribution,
+    typeDistribution,
+    isLoading
   };
 };
 

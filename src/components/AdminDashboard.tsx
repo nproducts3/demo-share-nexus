@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Calendar, Users, Clock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { DemoSessionCard } from './DemoSessionCard';
 import { EditSessionModal } from './EditSessionModal';
 import { sessionApi, DemoSession } from '../services/api';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 export const AdminDashboard: React.FC = () => {
   const [demoSessions, setDemoSessions] = useState<DemoSession[]>([]);
@@ -13,19 +12,19 @@ export const AdminDashboard: React.FC = () => {
   const [editingSession, setEditingSession] = useState<DemoSession | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const { toast } = useToast();
 
-  // Fetch demo sessions on component mount
   useEffect(() => {
-    const fetchDemoSessions = async () => {
+    const fetchSessions = async () => {
       try {
         setIsLoadingData(true);
         const sessions = await sessionApi.getAll();
-        setDemoSessions(sessions);
+        setDemoSessions(Array.isArray(sessions) ? sessions : []);
       } catch (error) {
-        console.error('Error fetching demo sessions:', error);
+        console.error('Error fetching sessions:', error);
         toast({
           title: "Error",
-          description: "Failed to fetch demo sessions. Please try again.",
+          description: "Failed to fetch sessions. Please try again.",
           variant: "destructive"
         });
       } finally {
@@ -33,8 +32,8 @@ export const AdminDashboard: React.FC = () => {
       }
     };
 
-    fetchDemoSessions();
-  }, []);
+    fetchSessions();
+  }, [toast]);
 
   const handleDeleteSession = async (sessionId: string) => {
     try {
@@ -87,9 +86,9 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const statsCards = [
-    { title: 'Total Sessions', value: demoSessions.length, icon: Calendar, color: 'bg-blue-500' },
-    { title: 'Upcoming Sessions', value: demoSessions.filter(s => s.status === 'upcoming').length, icon: Clock, color: 'bg-green-500' },
-    { title: 'Total Attendees', value: demoSessions.reduce((sum, s) => sum + s.attendees, 0), icon: Users, color: 'bg-purple-500' },
+    { title: 'Total Sessions', value: Array.isArray(demoSessions) ? demoSessions.length : 0, icon: Calendar, color: 'bg-blue-500' },
+    { title: 'Upcoming Sessions', value: Array.isArray(demoSessions) ? demoSessions.filter(s => s.status === 'upcoming').length : 0, icon: Clock, color: 'bg-green-500' },
+    { title: 'Total Attendees', value: Array.isArray(demoSessions) ? demoSessions.reduce((sum, s) => sum + s.attendees, 0) : 0, icon: Users, color: 'bg-purple-500' },
   ];
 
   if (isLoadingData) {

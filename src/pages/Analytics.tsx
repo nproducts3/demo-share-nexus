@@ -82,9 +82,8 @@ const Analytics = () => {
   const metrics = [
     {
       title: 'Total Sessions',
-      // value: `${analyticsData.totalSessions} / ${(analyticsData.totalSessions / 100).toFixed(1)}%`,
-      value: analyticsData.totalSessions.toString(),
-      change: `${(analyticsData.totalSessions / 50).toFixed(2)}%`,
+      value: (analyticsData?.totalSessions || 0).toString(),
+      change: `${((analyticsData?.totalSessions || 0) / 50).toFixed(2)}%`,
       trend: '',
       icon: Calendar,
       color: 'text-blue-600',
@@ -92,9 +91,8 @@ const Analytics = () => {
     },
     {
       title: 'Active Users',
-      // value: `${analyticsData.activeUsers} / ${(analyticsData.activeUsers / 100).toFixed(1)}%`,
-      value: analyticsData.activeUsers.toString(),
-      change: `${(analyticsData.activeUsers / 50).toFixed(2)}%`,
+      value: (analyticsData?.activeUsers || 0).toString(),
+      change: `${((analyticsData?.activeUsers || 0) / 50).toFixed(2)}%`,
       trend: '',
       icon: Users,
       color: 'text-green-600',
@@ -102,9 +100,8 @@ const Analytics = () => {
     },
     {
       title: 'Avg Session Time',
-      // value: `${analyticsData.averageSessionTime} / ${(getSessionTimeMinutes(analyticsData.averageSessionTime) / 100).toFixed(1)}%`,
-      value: analyticsData.averageSessionTime.toString(),
-      change: `${(getSessionTimeMinutes(analyticsData.averageSessionTime) / 50).toFixed(2)}%`,
+      value: (analyticsData?.averageSessionTime || '0m').toString(),
+      change: `${(getSessionTimeMinutes(analyticsData?.averageSessionTime || '0m') / 50).toFixed(2)}%`,
       trend: '',
       icon: Clock,
       color: 'text-orange-600',
@@ -112,9 +109,8 @@ const Analytics = () => {
     },
     {
       title: 'Conversion Rate',
-      // value: `${analyticsData.conversionRate} / ${(analyticsData.conversionRate / 100).toFixed(1)}%`,
-      value: analyticsData.conversionRate.toString(),
-      change: `${(analyticsData.conversionRate / 50).toFixed(2)}%`,
+      value: (analyticsData?.conversionRate || 0).toString(),
+      change: `${((analyticsData?.conversionRate || 0) / 50).toFixed(2)}%`,
       trend: '',
       icon: Target,
       color: 'text-purple-600',
