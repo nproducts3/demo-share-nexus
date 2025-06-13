@@ -48,7 +48,14 @@ const MySessions = () => {
     const fetchMySessions = async () => {
       try {
         setLoading(true);
-        const allSessions = await sessionApi.getAll();
+        const response = await sessionApi.getAll();
+        // Handle both paginated and non-paginated responses
+        let allSessions: DemoSession[] = [];
+        if (Array.isArray(response)) {
+          allSessions = response;
+        } else {
+          allSessions = response.data;
+        }
         // In a real app, you'd filter by current user's created sessions
         const userSessions = allSessions.filter(session => session.createdBy === 'Current Admin');
         setMySessions(userSessions);
