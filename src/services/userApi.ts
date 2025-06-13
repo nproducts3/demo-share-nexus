@@ -2,11 +2,24 @@
 import { BASE_URL } from './apiConfig';
 import { User } from '../types/api';
 
+// Define pagination interface for users
+interface PaginatedResponse<T> {
+  data: T[];
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  nextPage: number | null;
+  previousPage: number | null;
+}
+
 // User Management API functions
 export const userApi = {
-  // Fetch all users
-  getAll: async (): Promise<User[]> => {
-    const response = await fetch(`${BASE_URL}/api/users`);
+  // Fetch all users with pagination
+  getAll: async (page: number = 1, limit: number = 10): Promise<PaginatedResponse<User> | User[]> => {
+    const response = await fetch(`${BASE_URL}/api/users?page=${page}&limit=${limit}`);
     if (!response.ok) {
       throw new Error('Failed to fetch users');
     }

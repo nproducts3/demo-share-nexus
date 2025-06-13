@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Layout } from '../components/Layout';
 import { AddUserModal, EditUserModal } from '../components/AddUserModal';
 import { useToast } from '@/hooks/use-toast';
@@ -33,26 +34,48 @@ const UserManagement = () => {
   const [editLoading, setEditLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setIsLoading(true);
-        const response = await userApi.getAll();
-        setUsers(Array.isArray(response) ? response : []);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch users. Please try again.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [pageSize] = useState(10);
 
+  const fetchUsers = async (page: number = 1) => {
+    try {
+      setIsLoading(true);
+      const response = await userApi.getAll(page, pageSize);
+      
+      // Handle both paginated and non-paginated responses
+      if (Array.isArray(response)) {
+        setUsers(response);
+        setTotalPages(1);
+        setTotalItems(response.length);
+      } else {
+        setUsers(response.data);
+        setTotalPages(response.totalPages);
+        setTotalItems(response.totalItems);
+        setCurrentPage(response.currentPage);
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch users. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchUsers();
   }, [toast]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchUsers(page);
+  };
 
   const departments = Array.from(new Set(users.map(user => user.department)));
 
@@ -84,8 +107,8 @@ const UserManagement = () => {
       // Create the user via API
       const createdUser = await userApi.create(newUserData);
   
-      // Immediately update the local state with the new user
-      setUsers(prevUsers => [...prevUsers, createdUser]);
+      // Refresh current page to show the new user
+      await fetchUsers(currentPage);
   
       toast({
         title: "Success",
@@ -111,7 +134,6 @@ const UserManagement = () => {
       }
     }
   };
-  
 
   const handleExportUsers = () => {
     const csvContent = [
@@ -202,7 +224,8 @@ const UserManagement = () => {
     setEditLoading(true);
     try {
       const result = await userApi.update(updatedUser.id, updatedUser);
-      setUsers(prev => Array.isArray(prev) ? prev.map(u => u.id === updatedUser.id ? result : u) : []);
+      // Refresh current page to show updated user
+      await fetchUsers(currentPage);
       setIsEditModalOpen(false);
       setEditingUser(null);
       toast({
@@ -232,7 +255,8 @@ const UserManagement = () => {
     setDeleteLoading(true);
     try {
       await userApi.delete(userToDelete.id);
-      setUsers(prev => Array.isArray(prev) ? prev.filter(u => u.id !== userToDelete.id) : []);
+      // Refresh current page after deletion
+      await fetchUsers(currentPage);
       setIsDeleteModalOpen(false);
       setUserToDelete(null);
       toast({
@@ -260,7 +284,7 @@ const UserManagement = () => {
     setSkillLevelFilter('all');
   };
 
-  const totalUsers = users.length;
+  const totalUsers = totalItems;
   const activeUsers = users.filter(u => u.status === 'active').length;
   const adminUsers = users.filter(u => u.role === 'admin').length;
   const avgSessionsPerUser = users.length > 0 ? Math.round(users.reduce((sum, u) => sum + u.sessionsAttended, 0) / users.length) : 0;
@@ -479,6 +503,54 @@ const UserManagement = () => {
                     ))}
                   </TableBody>
                 </Table>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="mt-6">
+                    <Pagination>
+                      <PaginationContent>
+                        {currentPage > 1 && (
+                          <PaginationItem>
+                            <PaginationPrevious 
+                              href="#" 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handlePageChange(currentPage - 1);
+                              }} 
+                            />
+                          </PaginationItem>
+                        )}
+                        
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              href="#"
+                              isActive={page === currentPage}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handlePageChange(page);
+                              }}
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+                        
+                        {currentPage < totalPages && (
+                          <PaginationItem>
+                            <PaginationNext 
+                              href="#" 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handlePageChange(currentPage + 1);
+                              }} 
+                            />
+                          </PaginationItem>
+                        )}
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -515,7 +587,7 @@ const UserManagement = () => {
                 <CardContent className="space-y-4">
                   {departments.map((dept) => {
                     const deptUsers = users.filter(u => u.department === dept);
-                    const percentage = (deptUsers.length / totalUsers) * 100;
+                    const percentage = totalUsers > 0 ? (deptUsers.length / totalUsers) * 100 : 0;
                     return (
                       <div key={dept} className="flex items-center justify-between">
                         <div>
