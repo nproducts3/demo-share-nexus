@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Layout } from '../components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,7 +27,6 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { useToast } from '@/hooks/use-toast';
 import { useAnalyticsData } from '../hooks/useAnalyticsData';
 import { useQueryClient } from '@tanstack/react-query';
-import { Value } from '@radix-ui/react-select';
 
 // Utility to extract total minutes from a string like '1h 41m' or '45m'
 function getSessionTimeMinutes(sessionTime: string): number {
@@ -43,47 +43,22 @@ const Analytics = () => {
   const queryClient = useQueryClient();
   const { data: analyticsData, isLoading } = useAnalyticsData();
 
-  // Helper functions to calculate changes and trends
-  const calculateChange = (current: number, historical: Array<{ activeSessions?: number; admins?: number; employees?: number }>) => {
-    if (historical.length < 2) return '0%';
-    const previous = historical[historical.length - 2];
-    const change = ((current - (previous.activeSessions || previous.admins || previous.employees || 0)) / (previous.activeSessions || previous.admins || previous.employees || 1)) * 100;
-    return `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
-  };
-
-  const calculateTrend = (current: number, historical: Array<{ activeSessions?: number; admins?: number; employees?: number }>) => {
-    if (historical.length < 2) return 'neutral';
-    const previous = historical[historical.length - 2];
-    return current >= (previous.activeSessions || previous.admins || previous.employees || 0) ? 'up' : 'down';
-  };
-
-  const calculateTimeChange = (current: string) => {
-    // Parse current time string (e.g., "1h 30m" or "45m")
-    const [hours, minutes] = current.split('h').map(part => {
-      const match = part.match(/(\d+)m/);
-      return match ? parseInt(match[1]) : 0;
-    });
-    const totalMinutes = (hours || 0) * 60 + (minutes || 0);
-    
-    // For demo purposes, we'll use a simple comparison
-    // In a real app, you'd compare with historical data
-    return totalMinutes > 60 ? '+5.0%' : '-2.0%';
-  };
-
-  const calculateTimeTrend = (current: string) => {
-    const [hours, minutes] = current.split('h').map(part => {
-      const match = part.match(/(\d+)m/);
-      return match ? parseInt(match[1]) : 0;
-    });
-    const totalMinutes = (hours || 0) * 60 + (minutes || 0);
-    return totalMinutes > 60 ? 'up' : 'down';
+  // Provide default values to prevent undefined access
+  const safeAnalyticsData = analyticsData || {
+    totalSessions: 0,
+    activeUsers: 0,
+    averageSessionTime: '0m',
+    conversionRate: 0,
+    performanceTrends: [],
+    userEngagement: [],
+    recentActivity: []
   };
 
   const metrics = [
     {
       title: 'Total Sessions',
-      value: (analyticsData?.totalSessions || 0).toString(),
-      change: `${((analyticsData?.totalSessions || 0) / 50).toFixed(2)}%`,
+      value: safeAnalyticsData.totalSessions.toString(),
+      change: `${(safeAnalyticsData.totalSessions / 50).toFixed(2)}%`,
       trend: '',
       icon: Calendar,
       color: 'text-blue-600',
@@ -91,8 +66,8 @@ const Analytics = () => {
     },
     {
       title: 'Active Users',
-      value: (analyticsData?.activeUsers || 0).toString(),
-      change: `${((analyticsData?.activeUsers || 0) / 50).toFixed(2)}%`,
+      value: safeAnalyticsData.activeUsers.toString(),
+      change: `${(safeAnalyticsData.activeUsers / 50).toFixed(2)}%`,
       trend: '',
       icon: Users,
       color: 'text-green-600',
@@ -100,8 +75,8 @@ const Analytics = () => {
     },
     {
       title: 'Avg Session Time',
-      value: (analyticsData?.averageSessionTime || '0m').toString(),
-      change: `${(getSessionTimeMinutes(analyticsData?.averageSessionTime || '0m') / 50).toFixed(2)}%`,
+      value: safeAnalyticsData.averageSessionTime,
+      change: `${(getSessionTimeMinutes(safeAnalyticsData.averageSessionTime) / 50).toFixed(2)}%`,
       trend: '',
       icon: Clock,
       color: 'text-orange-600',
@@ -109,8 +84,8 @@ const Analytics = () => {
     },
     {
       title: 'Conversion Rate',
-      value: (analyticsData?.conversionRate || 0).toString(),
-      change: `${((analyticsData?.conversionRate || 0) / 50).toFixed(2)}%`,
+      value: safeAnalyticsData.conversionRate.toString(),
+      change: `${(safeAnalyticsData.conversionRate / 50).toFixed(2)}%`,
       trend: '',
       icon: Target,
       color: 'text-purple-600',
@@ -156,10 +131,10 @@ const Analytics = () => {
 
   const handleExportSessionOverview = () => {
     const data = [{
-      'Total Sessions': analyticsData.totalSessions,
-      'Active Users': analyticsData.activeUsers,
-      'Average Session Time': analyticsData.averageSessionTime,
-      'Conversion Rate': `${analyticsData.conversionRate.toFixed(1)}%`
+      'Total Sessions': safeAnalyticsData.totalSessions,
+      'Active Users': safeAnalyticsData.activeUsers,
+      'Average Session Time': safeAnalyticsData.averageSessionTime,
+      'Conversion Rate': `${safeAnalyticsData.conversionRate.toFixed(1)}%`
     }];
     
     downloadExcel(data, 'session_overview', ['Total Sessions', 'Active Users', 'Average Session Time', 'Conversion Rate']);
@@ -175,7 +150,7 @@ const Analytics = () => {
     const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     
     const data = daysOfWeek.map(day => {
-      const existingData = analyticsData.performanceTrends.find(trend => {
+      const existingData = safeAnalyticsData.performanceTrends.find(trend => {
         // Convert short day names (Mon, Tue, etc.) to full names for comparison
         const dayMap: { [key: string]: string } = {
           'Mon': 'Monday',
@@ -212,7 +187,7 @@ const Analytics = () => {
     ];
     
     const data = monthNames.map(monthName => {
-      const existingData = analyticsData.userEngagement.find(engagement => {
+      const existingData = safeAnalyticsData.userEngagement.find(engagement => {
         // Convert short month names (Jan, Feb, etc.) to full names for comparison
         const monthMap: { [key: string]: string } = {
           'Jan': 'January',
@@ -375,7 +350,7 @@ const Analytics = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={analyticsData.performanceTrends}>
+                <AreaChart data={safeAnalyticsData.performanceTrends}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                   <XAxis dataKey="name" stroke="#64748b" />
                   <YAxis stroke="#64748b" />
@@ -423,7 +398,7 @@ const Analytics = () => {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={400}>
-              <AreaChart data={analyticsData.userEngagement}>
+              <AreaChart data={safeAnalyticsData.userEngagement}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="name" stroke="#64748b" />
                 <YAxis stroke="#64748b" />
@@ -474,8 +449,8 @@ const Analytics = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {analyticsData.recentActivity.length > 0 ? (
-                analyticsData.recentActivity.map((activity, index) => (
+              {safeAnalyticsData.recentActivity.length > 0 ? (
+                safeAnalyticsData.recentActivity.map((activity, index) => (
                   <div key={index} className="flex items-center justify-between p-4 rounded-lg bg-white border border-slate-200">
                     <div className="flex items-center space-x-4">
                       <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">

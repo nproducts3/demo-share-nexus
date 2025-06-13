@@ -29,81 +29,72 @@ interface AnalyticsData {
 }
 
 export const useAnalyticsData = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [sessions, setSessions] = useState<DemoSession[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const { data: users = [], isLoading: usersLoading } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
       try {
-        setIsLoading(true);
-        const [usersResponse, sessionsResponse] = await Promise.all([
-          userApi.getAll(),
-          sessionApi.getAll()
-        ]);
-        setUsers(Array.isArray(usersResponse) ? usersResponse : []);
-        setSessions(Array.isArray(sessionsResponse) ? sessionsResponse : []);
+        const response = await userApi.getAll();
+        return Array.isArray(response) ? response : [];
       } catch (error) {
-        console.error('Error fetching analytics data:', error);
+        console.error('Error fetching users:', error);
         toast({
           title: "Error",
-          description: "Failed to fetch analytics data. Please try again.",
+          description: "Failed to fetch users data. Please try again.",
           variant: "destructive"
         });
-      } finally {
-        setIsLoading(false);
+        return [];
       }
-    };
+    }
+  });
 
-    fetchData();
-  }, [toast]);
+  const { data: sessions = [], isLoading: sessionsLoading } = useQuery({
+    queryKey: ['sessions'],
+    queryFn: async () => {
+      try {
+        const response = await sessionApi.getAll();
+        // Handle both direct array and paginated response
+        if (response && typeof response === 'object' && 'data' in response) {
+          return Array.isArray(response.data) ? response.data : [];
+        }
+        return Array.isArray(response) ? response : [];
+      } catch (error) {
+        console.error('Error fetching sessions:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch sessions data. Please try again.",
+          variant: "destructive"
+        });
+        return [];
+      }
+    }
+  });
 
-  const userStats = {
-    totalUsers: Array.isArray(users) ? users.length : 0,
-    activeUsers: Array.isArray(users) ? users.filter(user => user.status === 'active').length : 0,
-    inactiveUsers: Array.isArray(users) ? users.filter(user => user.status === 'inactive').length : 0,
-    averageSessionsPerUser: Array.isArray(users) && users.length > 0 
-      ? Math.round(users.reduce((sum, user) => sum + user.sessionsAttended, 0) / users.length) 
-      : 0
+  const isLoading = usersLoading || sessionsLoading;
+
+  // Calculate analytics data
+  const totalSessions = sessions.length;
+  const activeUsers = users.filter(user => user.status === 'active').length;
+  const averageSessionTime = calculateAverageSessionTime(sessions);
+  const conversionRate = calculateConversionRate(sessions);
+  const performanceTrends = calculatePerformanceTrends(sessions);
+  const userEngagement = calculateUserEngagement(users);
+  const recentActivity = calculateRecentActivity(sessions, users);
+
+  const data: AnalyticsData = {
+    totalSessions,
+    activeUsers,
+    averageSessionTime,
+    conversionRate,
+    performanceTrends,
+    userEngagement,
+    recentActivity
   };
 
-  const sessionStats = {
-    totalSessions: Array.isArray(sessions) ? sessions.length : 0,
-    upcomingSessions: Array.isArray(sessions) ? sessions.filter(session => session.status === 'upcoming').length : 0,
-    completedSessions: Array.isArray(sessions) ? sessions.filter(session => session.status === 'completed').length : 0,
-    cancelledSessions: Array.isArray(sessions) ? sessions.filter(session => session.status === 'cancelled').length : 0
-  };
+  return { data, isLoading };
 
-  const technologyDistribution = Array.isArray(sessions) 
-    ? sessions.reduce((acc, session) => {
-        acc[session.technology] = (acc[session.technology] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>)
-    : {};
-
-  const difficultyDistribution = Array.isArray(sessions)
-    ? sessions.reduce((acc, session) => {
-        acc[session.difficulty] = (acc[session.difficulty] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>)
-    : {};
-
-  const typeDistribution = Array.isArray(sessions)
-    ? sessions.reduce((acc, session) => {
-        acc[session.type] = (acc[session.type] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>)
-    : {};
-
-  return {
-    userStats,
-    sessionStats,
-    technologyDistribution,
-    difficultyDistribution,
-    typeDistribution,
-    isLoading
-  };
+  // Keep all the existing calculation functions
 };
 
 const calculateAverageSessionTime = (sessions: DemoSession[]): string => {
@@ -303,6 +294,7 @@ const getRelativeTime = (date: Date): string => {
   const diffInDays = Math.floor(diffInHours / 24);
   return `${diffInDays} days ago`;
 };
+
 const calculateConversionRate = (sessions: DemoSession[]): number => {
   console.log('=== Conversion Rate Calculation ===');
   console.log('Total sessions:', sessions.length);
@@ -337,4 +329,3 @@ const calculateConversionRate = (sessions: DemoSession[]): number => {
 
   return roundedRate;
 };
-
