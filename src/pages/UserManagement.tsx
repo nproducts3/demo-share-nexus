@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Layout } from '../components/Layout';
 import { AddUserModal, EditUserModal } from '../components/AddUserModal';
 import { useToast } from '@/hooks/use-toast';
@@ -69,12 +70,13 @@ const UserManagement = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, [toast]);
+    fetchUsers(currentPage);
+  }, [currentPage]);
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    fetchUsers(page);
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
   };
 
   const departments = Array.from(new Set(users.map(user => user.department)));
@@ -443,110 +445,107 @@ const UserManagement = () => {
               </CardContent>
             </Card>
 
-            {/* Users Table */}
+            {/* Users Table with ScrollArea */}
             <Card>
               <CardHeader>
-                <CardTitle>Users ({filteredUsers.length})</CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Users ({filteredUsers.length} of {totalUsers})</CardTitle>
+                  <div className="text-sm text-gray-500">
+                    Page {currentPage} of {totalPages}
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Department</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Sessions Attended</TableHead>
-                      <TableHead>Sessions Created</TableHead>
-                      <TableHead>Skill Level</TableHead>
-                      <TableHead>Last Login</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredUsers.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          <div className="flex items-center space-x-3">
-                            <Avatar>
-                              <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div 
-                                className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer"
-                                onClick={() => handleUserNameClick(user.id)}
-                              >
-                                {user.name}
-                              </div>
-                              <div className="text-xs text-gray-500">{user.email}</div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{getRoleBadge(user.role)}</TableCell>
-                        <TableCell>{user.department}</TableCell>
-                        <TableCell>{getStatusBadge(user.status)}</TableCell>
-                        <TableCell>{user.sessionsAttended}</TableCell>
-                        <TableCell>{user.sessionsCreated}</TableCell>
-                        <TableCell>{getSkillBadge(user.skillLevel)}</TableCell>
-                        <TableCell>{new Date(user.lastLogin).toLocaleString()}</TableCell>
-                        <TableCell>
-                          <div className="flex space-x-1">
-                            <Button size="sm" variant="outline" className="h-8 w-8 p-0" onClick={() => handleEditUser(user)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" variant="outline" className="h-8 w-8 p-0 text-red-600 hover:text-red-700" onClick={() => handleDeleteUser(user)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                <ScrollArea className="h-[600px]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>User</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Department</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Sessions Attended</TableHead>
+                        <TableHead>Sessions Created</TableHead>
+                        <TableHead>Skill Level</TableHead>
+                        <TableHead>Last Login</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredUsers.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell>
+                            <div className="flex items-center space-x-3">
+                              <Avatar>
+                                <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div 
+                                  className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer"
+                                  onClick={() => handleUserNameClick(user.id)}
+                                >
+                                  {user.name}
+                                </div>
+                                <div className="text-xs text-gray-500">{user.email}</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{getRoleBadge(user.role)}</TableCell>
+                          <TableCell>{user.department}</TableCell>
+                          <TableCell>{getStatusBadge(user.status)}</TableCell>
+                          <TableCell>{user.sessionsAttended}</TableCell>
+                          <TableCell>{user.sessionsCreated}</TableCell>
+                          <TableCell>{getSkillBadge(user.skillLevel)}</TableCell>
+                          <TableCell>{new Date(user.lastLogin).toLocaleString()}</TableCell>
+                          <TableCell>
+                            <div className="flex space-x-1">
+                              <Button size="sm" variant="outline" className="h-8 w-8 p-0" onClick={() => handleEditUser(user)}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="outline" className="h-8 w-8 p-0 text-red-600 hover:text-red-700" onClick={() => handleDeleteUser(user)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
 
-                {/* Pagination */}
+                {/* Pagination Controls */}
                 {totalPages > 1 && (
-                  <div className="mt-6">
+                  <div className="mt-6 flex justify-center">
                     <Pagination>
                       <PaginationContent>
-                        {currentPage > 1 && (
-                          <PaginationItem>
-                            <PaginationPrevious 
-                              href="#" 
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handlePageChange(currentPage - 1);
-                              }} 
-                            />
-                          </PaginationItem>
-                        )}
+                        <PaginationItem>
+                          <PaginationPrevious 
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            className={currentPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
                         
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                          <PaginationItem key={page}>
-                            <PaginationLink
-                              href="#"
-                              isActive={page === currentPage}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handlePageChange(page);
-                              }}
-                            >
-                              {page}
-                            </PaginationLink>
-                          </PaginationItem>
-                        ))}
+                        {[...Array(totalPages)].map((_, index) => {
+                          const page = index + 1;
+                          return (
+                            <PaginationItem key={page}>
+                              <PaginationLink
+                                onClick={() => handlePageChange(page)}
+                                isActive={currentPage === page}
+                                className="cursor-pointer"
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          );
+                        })}
                         
-                        {currentPage < totalPages && (
-                          <PaginationItem>
-                            <PaginationNext 
-                              href="#" 
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handlePageChange(currentPage + 1);
-                              }} 
-                            />
-                          </PaginationItem>
-                        )}
+                        <PaginationItem>
+                          <PaginationNext 
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
                       </PaginationContent>
                     </Pagination>
                   </div>
@@ -556,27 +555,31 @@ const UserManagement = () => {
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
-            {/* User Analytics */}
+            {/* User Analytics with ScrollArea */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle>User Engagement</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {users.slice(0, 5).map((user) => (
-                    <div key={user.id} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className="text-xs">{getInitials(user.name)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="text-sm font-medium">{user.name}</div>
-                          <div className="text-xs text-gray-500">{user.sessionsAttended} sessions</div>
+                <CardContent>
+                  <ScrollArea className="h-80">
+                    <div className="space-y-4 pr-4">
+                      {users.slice(0, 5).map((user) => (
+                        <div key={user.id} className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="text-xs">{getInitials(user.name)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="text-sm font-medium">{user.name}</div>
+                              <div className="text-xs text-gray-500">{user.sessionsAttended} sessions</div>
+                            </div>
+                          </div>
+                          <Progress value={(user.sessionsAttended / 30) * 100} className="w-20" />
                         </div>
-                      </div>
-                      <Progress value={(user.sessionsAttended / 30) * 100} className="w-20" />
+                      ))}
                     </div>
-                  ))}
+                  </ScrollArea>
                 </CardContent>
               </Card>
 
@@ -584,23 +587,27 @@ const UserManagement = () => {
                 <CardHeader>
                   <CardTitle>Department Distribution</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {departments.map((dept) => {
-                    const deptUsers = users.filter(u => u.department === dept);
-                    const percentage = totalUsers > 0 ? (deptUsers.length / totalUsers) * 100 : 0;
-                    return (
-                      <div key={dept} className="flex items-center justify-between">
-                        <div>
-                          <div className="text-sm font-medium">{dept}</div>
-                          <div className="text-xs text-gray-500">{deptUsers.length} users</div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Progress value={percentage} className="w-20" />
-                          <span className="text-xs text-gray-600">{Math.round(percentage)}%</span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <CardContent>
+                  <ScrollArea className="h-80">
+                    <div className="space-y-4 pr-4">
+                      {departments.map((dept) => {
+                        const deptUsers = users.filter(u => u.department === dept);
+                        const percentage = totalUsers > 0 ? (deptUsers.length / totalUsers) * 100 : 0;
+                        return (
+                          <div key={dept} className="flex items-center justify-between">
+                            <div>
+                              <div className="text-sm font-medium">{dept}</div>
+                              <div className="text-xs text-gray-500">{deptUsers.length} users</div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Progress value={percentage} className="w-20" />
+                              <span className="text-xs text-gray-600">{Math.round(percentage)}%</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
                 </CardContent>
               </Card>
             </div>
@@ -611,29 +618,31 @@ const UserManagement = () => {
                 <CardTitle>Top Performers</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {users
-                    .sort((a, b) => b.sessionsAttended - a.sessionsAttended)
-                    .slice(0, 3)
-                    .map((user, index) => (
-                      <div key={user.id} className="text-center p-4 border rounded-lg">
-                        <div className="relative">
-                          <Avatar className="h-16 w-16 mx-auto mb-3">
-                            <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                          </Avatar>
-                          {index === 0 && (
-                            <div className="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
-                              1
-                            </div>
-                          )}
+                <ScrollArea className="h-64">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pr-4">
+                    {users
+                      .sort((a, b) => b.sessionsAttended - a.sessionsAttended)
+                      .slice(0, 3)
+                      .map((user, index) => (
+                        <div key={user.id} className="text-center p-4 border rounded-lg">
+                          <div className="relative">
+                            <Avatar className="h-16 w-16 mx-auto mb-3">
+                              <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                            </Avatar>
+                            {index === 0 && (
+                              <div className="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
+                                1
+                              </div>
+                            )}
+                          </div>
+                          <div className="font-medium">{user.name}</div>
+                          <div className="text-sm text-gray-500">{user.department}</div>
+                          <div className="text-lg font-bold text-blue-600">{user.sessionsAttended}</div>
+                          <div className="text-xs text-gray-500">sessions attended</div>
                         </div>
-                        <div className="font-medium">{user.name}</div>
-                        <div className="text-sm text-gray-500">{user.department}</div>
-                        <div className="text-lg font-bold text-blue-600">{user.sessionsAttended}</div>
-                        <div className="text-xs text-gray-500">sessions attended</div>
-                      </div>
-                    ))}
-                </div>
+                      ))}
+                  </div>
+                </ScrollArea>
               </CardContent>
             </Card>
           </TabsContent>

@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Layout } from '../components/Layout';
 import { CreateSessionModal } from '../components/CreateSessionModal';
 import { EditSessionModal } from '../components/EditSessionModal';
@@ -151,20 +152,19 @@ const DemoSessions = () => {
     return <Badge className={colors[difficulty as keyof typeof colors]}>{difficulty}</Badge>;
   };
 
-  // Update the getTypeBadge function:
-const getTypeBadge = (type: string) => {
-  const colors = {
-    'PRODUCT_BASED': 'bg-indigo-100 text-indigo-800',
-    'PROJECT_BASED': 'bg-emerald-100 text-emerald-800'
+  const getTypeBadge = (type: string) => {
+    const colors = {
+      'PRODUCT_BASED': 'bg-indigo-100 text-indigo-800',
+      'PROJECT_BASED': 'bg-emerald-100 text-emerald-800'
+    };
+    const displayNames = {
+      'PRODUCT_BASED': 'Product-based',
+      'PROJECT_BASED': 'Project-based'
+    };
+    return <Badge className={colors[type as keyof typeof colors]}>
+      {displayNames[type as keyof typeof displayNames] || type}
+    </Badge>;
   };
-  const displayNames = {
-    'PRODUCT_BASED': 'Product-based',
-    'PROJECT_BASED': 'Project-based'
-  };
-  return <Badge className={colors[type as keyof typeof colors]}>
-    {displayNames[type as keyof typeof displayNames] || type}
-  </Badge>;
-};
 
   const handleTypeEdit = async (sessionId: string, newType: 'PROJECT_BASED' | 'PRODUCT_BASED') => {
     try {
@@ -516,7 +516,7 @@ const getTypeBadge = (type: string) => {
           </Card>
         )}
 
-        {/* Sessions Table */}
+        {/* Sessions Table with ScrollArea */}
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
@@ -527,133 +527,135 @@ const getTypeBadge = (type: string) => {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={selectedSessions.length === filteredSessions.length && filteredSessions.length > 0}
-                      onCheckedChange={handleSelectAll}
-                    />
-                  </TableHead>
-                  <TableHead>Session</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Technology</TableHead>
-                  <TableHead>Date & Time</TableHead>
-                  <TableHead>Attendees</TableHead>
-                  <TableHead>Difficulty</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredSessions.map((session) => (
-                  <TableRow key={session.id}>
-                    <TableCell>
+            <ScrollArea className="h-[600px]">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">
                       <Checkbox
-                        checked={selectedSessions.includes(session.id)}
-                        onCheckedChange={(checked) => handleSelectSession(session.id, checked as boolean)}
+                        checked={selectedSessions.length === filteredSessions.length && filteredSessions.length > 0}
+                        onCheckedChange={handleSelectAll}
                       />
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div 
-                          className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
-                          onClick={() => handleViewSession(session.id)}
-                        >
-                          {session.title}
-                        </div>
-                        <div className="text-sm text-gray-500">{session.location}</div>
-                        {session.duration && (
-                          <div className="text-xs text-gray-400">{session.duration} min</div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {editingType === session.id ? (
-                        <div className="flex items-center space-x-1">
-                          <Select
-                            value={session.type}
-                            onValueChange={(value) => handleTypeEdit(session.id, value as any)}
-                          >
-                            <SelectTrigger className="w-32 h-8">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="PROJECT_BASED">PROJECT_BASED</SelectItem>
-                              <SelectItem value="PRODUCT_BASED">PRODUCT_BASED</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-6 w-6 p-0"
-                            onClick={() => setEditingType(null)}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center space-x-1">
-                          {getTypeBadge(session.type)}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-6 w-6 p-0"
-                            onClick={() => setEditingType(session.id)}
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{session.technology}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{new Date(session.date).toLocaleDateString()}</div>
-                        <div className="text-sm text-gray-500">{session.time}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-1">
-                        <Users className="h-4 w-4 text-gray-400" />
-                        <span>{session.maxAttendees}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{getDifficultyBadge(session.difficulty)}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-1">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="h-8 w-8 p-0"
-                          onClick={() => handleViewSession(session.id)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="h-8 w-8 p-0"
-                          onClick={() => handleEditSession(session.id)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                          onClick={() => handleDeleteSession(session.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                    </TableHead>
+                    <TableHead>Session</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Technology</TableHead>
+                    <TableHead>Date & Time</TableHead>
+                    <TableHead>Attendees</TableHead>
+                    <TableHead>Difficulty</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredSessions.map((session) => (
+                    <TableRow key={session.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedSessions.includes(session.id)}
+                          onCheckedChange={(checked) => handleSelectSession(session.id, checked as boolean)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div 
+                            className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
+                            onClick={() => handleViewSession(session.id)}
+                          >
+                            {session.title}
+                          </div>
+                          <div className="text-sm text-gray-500">{session.location}</div>
+                          {session.duration && (
+                            <div className="text-xs text-gray-400">{session.duration} min</div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {editingType === session.id ? (
+                          <div className="flex items-center space-x-1">
+                            <Select
+                              value={session.type}
+                              onValueChange={(value) => handleTypeEdit(session.id, value as any)}
+                            >
+                              <SelectTrigger className="w-32 h-8">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="PROJECT_BASED">PROJECT_BASED</SelectItem>
+                                <SelectItem value="PRODUCT_BASED">PRODUCT_BASED</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 w-6 p-0"
+                              onClick={() => setEditingType(null)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-1">
+                            {getTypeBadge(session.type)}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 w-6 p-0"
+                              onClick={() => setEditingType(session.id)}
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{session.technology}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{new Date(session.date).toLocaleDateString()}</div>
+                          <div className="text-sm text-gray-500">{session.time}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-1">
+                          <Users className="h-4 w-4 text-gray-400" />
+                          <span>{session.maxAttendees}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{getDifficultyBadge(session.difficulty)}</TableCell>
+                      <TableCell>
+                        <div className="flex space-x-1">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleViewSession(session.id)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleEditSession(session.id)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                            onClick={() => handleDeleteSession(session.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </ScrollArea>
 
             {/* Pagination Controls */}
             {totalPages > 1 && (

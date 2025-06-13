@@ -4,6 +4,7 @@ import { Calendar, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
 
 interface Invitation {
@@ -133,9 +134,65 @@ export const EmployeeDashboard: React.FC = () => {
       {pendingInvitations.length > 0 && (
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Pending Invitations</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {pendingInvitations.map((invitation) => (
-              <Card key={invitation.id} className="hover:shadow-lg transition-shadow border-yellow-200">
+          <ScrollArea className="h-96">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pr-4">
+              {pendingInvitations.map((invitation) => (
+                <Card key={invitation.id} className="hover:shadow-lg transition-shadow border-yellow-200">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">{invitation.sessionTitle}</CardTitle>
+                        <CardDescription>
+                          Technology: {invitation.technology} • Host: {invitation.host}
+                        </CardDescription>
+                      </div>
+                      {getStatusBadge(invitation.status)}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <Calendar className="h-4 w-4" />
+                        <span>{new Date(invitation.date).toLocaleDateString()}</span>
+                        <Clock className="h-4 w-4 ml-4" />
+                        <span>{invitation.time}</span>
+                      </div>
+                      <p className="text-sm text-gray-700">{invitation.description}</p>
+                      <div className="flex space-x-2 pt-2">
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleInvitationResponse(invitation.id, 'accepted')}
+                          className="flex items-center space-x-1"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          <span>Accept</span>
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleInvitationResponse(invitation.id, 'declined')}
+                          className="flex items-center space-x-1"
+                        >
+                          <XCircle className="h-4 w-4" />
+                          <span>Decline</span>
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
+      )}
+
+      {/* Accepted/Upcoming Sessions */}
+      <div>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">My Upcoming Sessions</h2>
+        <ScrollArea className="h-96">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pr-4">
+            {acceptedInvitations.map((invitation) => (
+              <Card key={invitation.id} className="hover:shadow-lg transition-shadow border-green-200">
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
@@ -156,64 +213,12 @@ export const EmployeeDashboard: React.FC = () => {
                       <span>{invitation.time}</span>
                     </div>
                     <p className="text-sm text-gray-700">{invitation.description}</p>
-                    <div className="flex space-x-2 pt-2">
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleInvitationResponse(invitation.id, 'accepted')}
-                        className="flex items-center space-x-1"
-                      >
-                        <CheckCircle className="h-4 w-4" />
-                        <span>Accept</span>
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleInvitationResponse(invitation.id, 'declined')}
-                        className="flex items-center space-x-1"
-                      >
-                        <XCircle className="h-4 w-4" />
-                        <span>Decline</span>
-                      </Button>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* Accepted/Upcoming Sessions */}
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">My Upcoming Sessions</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {acceptedInvitations.map((invitation) => (
-            <Card key={invitation.id} className="hover:shadow-lg transition-shadow border-green-200">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">{invitation.sessionTitle}</CardTitle>
-                    <CardDescription>
-                      Technology: {invitation.technology} • Host: {invitation.host}
-                    </CardDescription>
-                  </div>
-                  {getStatusBadge(invitation.status)}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <Calendar className="h-4 w-4" />
-                    <span>{new Date(invitation.date).toLocaleDateString()}</span>
-                    <Clock className="h-4 w-4 ml-4" />
-                    <span>{invitation.time}</span>
-                  </div>
-                  <p className="text-sm text-gray-700">{invitation.description}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        </ScrollArea>
       </div>
     </div>
   );
