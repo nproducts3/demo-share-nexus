@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Layout } from '../components/Layout';
 import { CreateSessionModal } from '../components/CreateSessionModal';
 import { EditSessionModal } from '../components/EditSessionModal';
@@ -95,6 +95,18 @@ const DemoSessions = () => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
       setSelectedSessions([]); // Clear selections when changing pages
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      handlePageChange(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      handlePageChange(currentPage - 1);
     }
   };
 
@@ -516,7 +528,7 @@ const DemoSessions = () => {
           </Card>
         )}
 
-        {/* Sessions Table with ScrollArea */}
+        {/* Sessions Table with Horizontal ScrollArea */}
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
@@ -527,171 +539,201 @@ const DemoSessions = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[600px]">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">
-                      <Checkbox
-                        checked={selectedSessions.length === filteredSessions.length && filteredSessions.length > 0}
-                        onCheckedChange={handleSelectAll}
-                      />
-                    </TableHead>
-                    <TableHead>Session</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Technology</TableHead>
-                    <TableHead>Date & Time</TableHead>
-                    <TableHead>Attendees</TableHead>
-                    <TableHead>Difficulty</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredSessions.map((session) => (
-                    <TableRow key={session.id}>
-                      <TableCell>
+            <ScrollArea className="h-[600px] w-full">
+              <div className="min-w-[1200px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">
                         <Checkbox
-                          checked={selectedSessions.includes(session.id)}
-                          onCheckedChange={(checked) => handleSelectSession(session.id, checked as boolean)}
+                          checked={selectedSessions.length === filteredSessions.length && filteredSessions.length > 0}
+                          onCheckedChange={handleSelectAll}
                         />
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div 
-                            className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
-                            onClick={() => handleViewSession(session.id)}
-                          >
-                            {session.title}
-                          </div>
-                          <div className="text-sm text-gray-500">{session.location}</div>
-                          {session.duration && (
-                            <div className="text-xs text-gray-400">{session.duration} min</div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {editingType === session.id ? (
-                          <div className="flex items-center space-x-1">
-                            <Select
-                              value={session.type}
-                              onValueChange={(value) => handleTypeEdit(session.id, value as any)}
-                            >
-                              <SelectTrigger className="w-32 h-8">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="PROJECT_BASED">PROJECT_BASED</SelectItem>
-                                <SelectItem value="PRODUCT_BASED">PRODUCT_BASED</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-6 w-6 p-0"
-                              onClick={() => setEditingType(null)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center space-x-1">
-                            {getTypeBadge(session.type)}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-6 w-6 p-0"
-                              onClick={() => setEditingType(session.id)}
-                            >
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{session.technology}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{new Date(session.date).toLocaleDateString()}</div>
-                          <div className="text-sm text-gray-500">{session.time}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-1">
-                          <Users className="h-4 w-4 text-gray-400" />
-                          <span>{session.maxAttendees}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getDifficultyBadge(session.difficulty)}</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-1">
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="h-8 w-8 p-0"
-                            onClick={() => handleViewSession(session.id)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="h-8 w-8 p-0"
-                            onClick={() => handleEditSession(session.id)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                            onClick={() => handleDeleteSession(session.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                      </TableHead>
+                      <TableHead className="min-w-[200px]">Session</TableHead>
+                      <TableHead className="min-w-[150px]">Type</TableHead>
+                      <TableHead className="min-w-[120px]">Technology</TableHead>
+                      <TableHead className="min-w-[150px]">Date & Time</TableHead>
+                      <TableHead className="min-w-[100px]">Attendees</TableHead>
+                      <TableHead className="min-w-[120px]">Status</TableHead>
+                      <TableHead className="min-w-[100px]">Difficulty</TableHead>
+                      <TableHead className="min-w-[150px]">Location</TableHead>
+                      <TableHead className="min-w-[100px]">Duration</TableHead>
+                      <TableHead className="min-w-[120px]">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredSessions.map((session) => (
+                      <TableRow key={session.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedSessions.includes(session.id)}
+                            onCheckedChange={(checked) => handleSelectSession(session.id, checked as boolean)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div 
+                              className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
+                              onClick={() => handleViewSession(session.id)}
+                            >
+                              {session.title}
+                            </div>
+                            <div className="text-sm text-gray-500 truncate max-w-[180px]">
+                              {session.description}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {editingType === session.id ? (
+                            <div className="flex items-center space-x-1">
+                              <Select
+                                value={session.type}
+                                onValueChange={(value) => handleTypeEdit(session.id, value as any)}
+                              >
+                                <SelectTrigger className="w-32 h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="PROJECT_BASED">PROJECT_BASED</SelectItem>
+                                  <SelectItem value="PRODUCT_BASED">PRODUCT_BASED</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 w-6 p-0"
+                                onClick={() => setEditingType(null)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-1">
+                              {getTypeBadge(session.type)}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 w-6 p-0"
+                                onClick={() => setEditingType(session.id)}
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{session.technology}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{new Date(session.date).toLocaleDateString()}</div>
+                            <div className="text-sm text-gray-500">{session.time}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-1">
+                            <Users className="h-4 w-4 text-gray-400" />
+                            <span>{session.attendees || 0}/{session.maxAttendees}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(session.status)}</TableCell>
+                        <TableCell>{getDifficultyBadge(session.difficulty)}</TableCell>
+                        <TableCell>
+                          <div className="truncate max-w-[120px]" title={session.location}>
+                            {session.location}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm">{session.duration ? `${session.duration} min` : 'N/A'}</span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-1">
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="h-8 w-8 p-0"
+                              onClick={() => handleViewSession(session.id)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="h-8 w-8 p-0"
+                              onClick={() => handleEditSession(session.id)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                              onClick={() => handleDeleteSession(session.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <ScrollBar orientation="horizontal" />
             </ScrollArea>
 
-            {/* Pagination Controls */}
+            {/* Enhanced Pagination Controls */}
             {totalPages > 1 && (
-              <div className="mt-6 flex justify-center">
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        className={currentPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                      />
-                    </PaginationItem>
-                    
+              <div className="mt-6 flex items-center justify-between">
+                <div className="text-sm text-gray-700">
+                  Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems} sessions
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePreviousPage}
+                    disabled={currentPage <= 1}
+                    className="flex items-center space-x-1"
+                  >
+                    <span>Previous</span>
+                  </Button>
+                  
+                  <div className="flex items-center space-x-1">
                     {[...Array(totalPages)].map((_, index) => {
                       const page = index + 1;
-                      return (
-                        <PaginationItem key={page}>
-                          <PaginationLink
+                      if (totalPages <= 7 || page <= 3 || page >= totalPages - 2 || Math.abs(page - currentPage) <= 1) {
+                        return (
+                          <Button
+                            key={page}
+                            variant={currentPage === page ? "default" : "outline"}
+                            size="sm"
                             onClick={() => handlePageChange(page)}
-                            isActive={currentPage === page}
-                            className="cursor-pointer"
+                            className="w-8 h-8"
                           >
                             {page}
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
+                          </Button>
+                        );
+                      } else if (page === 4 && currentPage > 5) {
+                        return <span key={page} className="px-2">...</span>;
+                      } else if (page === totalPages - 3 && currentPage < totalPages - 4) {
+                        return <span key={page} className="px-2">...</span>;
+                      }
+                      return null;
                     })}
-                    
-                    <PaginationItem>
-                      <PaginationNext 
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNextPage}
+                    disabled={currentPage >= totalPages}
+                    className="flex items-center space-x-1"
+                  >
+                    <span>Next</span>
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
