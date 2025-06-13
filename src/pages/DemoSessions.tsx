@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Layout } from '../components/Layout';
 import { CreateSessionModal } from '../components/CreateSessionModal';
 import { EditSessionModal } from '../components/EditSessionModal';
@@ -15,6 +16,16 @@ import { useToast } from '@/hooks/use-toast';
 import { sessionApi, DemoSession } from '../services/api';
 import { DeleteConfirmationModal } from '../components/DeleteConfirmationModal';
 import { updateSessionsWithAttendees } from '../utils/updateSampleData';
+
+interface PaginatedSessionsResponse {
+  data: DemoSession[];
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
 
 const DemoSessions = () => {
   const navigate = useNavigate();
@@ -35,34 +46,62 @@ const DemoSessions = () => {
   const [sessionToDelete, setSessionToDelete] = useState<DemoSession | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Fetch sessions on component mount
-  useEffect(() => {
-    const fetchSessions = async () => {
-      try {
-        setLoading(true);
-        const sessions = await sessionApi.getAll();
-        setDemoSessions(Array.isArray(sessions) ? sessions : []);
-      } catch (error) {
-        console.error('Error fetching sessions:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch sessions. Please try again.",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [pageSize] = useState(10);
 
-    fetchSessions();
-  }, [toast]);
+  // Fetch sessions with pagination
+  const fetchSessions = async (page: number = 1) => {
+    try {
+      setLoading(true);
+      const response = await sessionApi.getAll(page, pageSize);
+      
+      // Handle both paginated and non-paginated responses
+      if (response && typeof response === 'object' && 'data' in response) {
+        const paginatedResponse = response as PaginatedSessionsResponse;
+        setDemoSessions(paginatedResponse.data || []);
+        setTotalPages(paginatedResponse.totalPages || 1);
+        setTotalItems(paginatedResponse.totalItems || 0);
+        setCurrentPage(paginatedResponse.currentPage || 1);
+      } else {
+        // Fallback for non-paginated response
+        const sessions = Array.isArray(response) ? response : [];
+        setDemoSessions(sessions);
+        setTotalPages(1);
+        setTotalItems(sessions.length);
+        setCurrentPage(1);
+      }
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch sessions. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch sessions on component mount and page change
+  useEffect(() => {
+    fetchSessions(currentPage);
+  }, [currentPage]);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      setSelectedSessions([]); // Clear selections when changing pages
+    }
+  };
 
   const handleUpdateSampleData = async () => {
     try {
       await updateSessionsWithAttendees();
       // Refresh the sessions data
-      const sessions = await sessionApi.getAll();
-      setDemoSessions(sessions);
+      await fetchSessions(currentPage);
       toast({
         title: "Sample Data Updated",
         description: "Sessions have been updated with attendee data to demonstrate metrics.",
@@ -173,7 +212,7 @@ const getTypeBadge = (type: string) => {
     if (action === 'delete') {
       try {
         await Promise.all(selectedSessions.map(id => sessionApi.delete(id)));
-        setDemoSessions(prev => prev.filter(session => !selectedSessions.includes(session.id)));
+        await fetchSessions(currentPage); // Refresh current page
         setSelectedSessions([]);
         toast({
           title: "Sessions Deleted",
@@ -206,7 +245,7 @@ const getTypeBadge = (type: string) => {
       });
       console.log('Created session:', newSession);
       
-      setDemoSessions(prev => [...prev, newSession]);
+      await fetchSessions(currentPage); // Refresh current page
       setIsCreateModalOpen(false);
       
       toast({
@@ -268,7 +307,7 @@ const getTypeBadge = (type: string) => {
     setDeleteLoading(true);
     try {
       await sessionApi.delete(sessionToDelete.id);
-      setDemoSessions(prev => prev.filter(s => s.id !== sessionToDelete.id));
+      await fetchSessions(currentPage); // Refresh current page
       setDeleteModalOpen(false);
       setSessionToDelete(null);
       toast({
@@ -362,7 +401,7 @@ const getTypeBadge = (type: string) => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Total Sessions</p>
-                  <p className="text-2xl font-bold">{demoSessions.length}</p>
+                  <p className="text-2xl font-bold">{totalItems}</p>
                 </div>
                 <Calendar className="h-8 w-8 text-blue-500" />
               </div>
@@ -372,8 +411,8 @@ const getTypeBadge = (type: string) => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Upcoming</p>
-                  <p className="text-2xl font-bold">{demoSessions.filter(s => s.status === 'upcoming').length}</p>
+                  <p className="text-sm text-gray-600">Current Page</p>
+                  <p className="text-2xl font-bold">{currentPage} of {totalPages}</p>
                 </div>
                 <Clock className="h-8 w-8 text-green-500" />
               </div>
@@ -383,10 +422,8 @@ const getTypeBadge = (type: string) => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Attendees</p>
-                  <p className="text-2xl font-bold">
-                    {demoSessions.reduce((sum, session) => sum + session.attendees, 0)}
-                  </p>
+                  <p className="text-sm text-gray-600">Page Size</p>
+                  <p className="text-2xl font-bold">{pageSize}</p>
                 </div>
                 <Users className="h-8 w-8 text-purple-500" />
               </div>
@@ -396,16 +433,8 @@ const getTypeBadge = (type: string) => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Avg Attendance</p>
-                  <p className="text-2xl font-bold">
-                    {(() => {
-                      const totalAttendees = demoSessions.reduce((sum, session) => sum + session.attendees, 0);
-                      const totalMaxAttendees = demoSessions.reduce((sum, session) => sum + session.maxAttendees, 0);
-                      return totalMaxAttendees > 0 
-                        ? Math.round((totalAttendees / totalMaxAttendees) * 100) 
-                        : 0;
-                    })()}%
-                  </p>
+                  <p className="text-sm text-gray-600">Showing</p>
+                  <p className="text-2xl font-bold">{demoSessions.length}</p>
                 </div>
                 <Filter className="h-8 w-8 text-orange-500" />
               </div>
@@ -490,7 +519,12 @@ const getTypeBadge = (type: string) => {
         {/* Sessions Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Sessions ({filteredSessions.length})</CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle>Sessions ({filteredSessions.length} of {totalItems})</CardTitle>
+              <div className="text-sm text-gray-500">
+                Page {currentPage} of {totalPages}
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
@@ -620,6 +654,44 @@ const getTypeBadge = (type: string) => {
                 ))}
               </TableBody>
             </Table>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="mt-6 flex justify-center">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        className={currentPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                      />
+                    </PaginationItem>
+                    
+                    {[...Array(totalPages)].map((_, index) => {
+                      const page = index + 1;
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => handlePageChange(page)}
+                            isActive={currentPage === page}
+                            className="cursor-pointer"
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    })}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </CardContent>
         </Card>
 

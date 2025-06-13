@@ -1,11 +1,31 @@
+
 import { BASE_URL } from './apiConfig';
 import { DemoSession, ApiError, ApiErrorResponse } from '../types/api';
 
+interface PaginatedResponse<T> {
+  data: T[];
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  nextPage: number | null;
+  previousPage: number | null;
+}
+
 // Demo Session API functions
 export const sessionApi = {
-  // Fetch all sessions
-  getAll: async (): Promise<DemoSession[]> => {
-    const response = await fetch(`${BASE_URL}/api/sessions`);
+  // Fetch all sessions with optional pagination
+  getAll: async (page?: number, limit?: number): Promise<DemoSession[] | PaginatedResponse<DemoSession>> => {
+    let url = `${BASE_URL}/api/sessions`;
+    
+    // Add pagination parameters if provided
+    if (page && limit) {
+      url += `?page=${page}&limit=${limit}`;
+    }
+    
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error('Failed to fetch sessions');
     }
