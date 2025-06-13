@@ -35,7 +35,11 @@ export const useAnalyticsData = () => {
     queryKey: ['users'],
     queryFn: async () => {
       try {
-        const response = await userApi.getAll();
+        const response = await userApi.getAll(1, 1000); // Get all users for analytics
+        // Handle paginated response properly
+        if (response && typeof response === 'object' && 'data' in response) {
+          return Array.isArray(response.data) ? response.data : [];
+        }
         return Array.isArray(response) ? response : [];
       } catch (error) {
         console.error('Error fetching users:', error);

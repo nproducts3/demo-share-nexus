@@ -44,21 +44,36 @@ const UserManagement = () => {
   const fetchUsers = async (page: number = 1) => {
     try {
       setIsLoading(true);
+      console.log('Fetching users for page:', page);
       const response = await userApi.getAll(page, pageSize);
+      console.log('User API response:', response);
       
       // Handle both paginated and non-paginated responses
       if (Array.isArray(response)) {
+        console.log('Response is array, setting users directly');
         setUsers(response);
         setTotalPages(1);
         setTotalItems(response.length);
+        setCurrentPage(1);
+      } else if (response && typeof response === 'object' && 'data' in response) {
+        console.log('Response is paginated, extracting data');
+        setUsers(response.data || []);
+        setTotalPages(response.totalPages || 1);
+        setTotalItems(response.totalItems || 0);
+        setCurrentPage(response.currentPage || page);
       } else {
-        setUsers(response.data);
-        setTotalPages(response.totalPages);
-        setTotalItems(response.totalItems);
-        setCurrentPage(response.currentPage);
+        console.log('Unexpected response format, setting empty array');
+        setUsers([]);
+        setTotalPages(1);
+        setTotalItems(0);
+        setCurrentPage(1);
       }
     } catch (error) {
       console.error('Error fetching users:', error);
+      setUsers([]);
+      setTotalPages(1);
+      setTotalItems(0);
+      setCurrentPage(1);
       toast({
         title: "Error",
         description: "Failed to fetch users. Please try again.",
