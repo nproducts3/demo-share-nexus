@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { userApi, User } from '../services/api';
 import { DeleteConfirmationModal } from '../components/DeleteConfirmationModal';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const UserManagement = () => {
   const { toast } = useToast();
@@ -40,6 +41,8 @@ const UserManagement = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [pageSize] = useState(10);
+
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
   const fetchUsers = async (page: number = 1) => {
     try {
@@ -306,6 +309,41 @@ const UserManagement = () => {
   const adminUsers = users.filter(u => u.role === 'admin').length;
   const avgSessionsPerUser = users.length > 0 ? Math.round(users.reduce((sum, u) => sum + u.sessionsAttended, 0) / users.length) : 0;
 
+  const handleSelectAllUsers = (checked: boolean) => {
+    if (checked) {
+      setSelectedUsers(filteredUsers.map(user => user.id));
+    } else {
+      setSelectedUsers([]);
+    }
+  };
+
+  const handleSelectUser = (userId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedUsers([...selectedUsers, userId]);
+    } else {
+      setSelectedUsers(selectedUsers.filter(id => id !== userId));
+    }
+  };
+
+  const handleBulkDeleteUsers = async () => {
+    try {
+      await Promise.all(selectedUsers.map(id => userApi.delete(id)));
+      await fetchUsers(currentPage);
+      setSelectedUsers([]);
+      toast({
+        title: 'Users Deleted',
+        description: 'Selected users have been deleted successfully.',
+        variant: 'destructive',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete some users. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <Layout>
@@ -460,6 +498,25 @@ const UserManagement = () => {
               </CardContent>
             </Card>
 
+            {/* Bulk Actions */}
+            {selectedUsers.length > 0 && (
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-blue-800">
+                      {selectedUsers.length} user(s) selected
+                    </span>
+                    <div className="flex space-x-2">
+                      <Button size="sm" variant="destructive" onClick={handleBulkDeleteUsers}>
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete Selected
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Users Table with ScrollArea */}
             <Card>
               <CardHeader>
@@ -475,6 +532,12 @@ const UserManagement = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-12">
+                          <Checkbox
+                            checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
+                            onCheckedChange={handleSelectAllUsers}
+                          />
+                        </TableHead>
                         <TableHead>User</TableHead>
                         <TableHead>Role</TableHead>
                         <TableHead>Department</TableHead>
@@ -489,6 +552,12 @@ const UserManagement = () => {
                     <TableBody>
                       {filteredUsers.map((user) => (
                         <TableRow key={user.id}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedUsers.includes(user.id)}
+                              onCheckedChange={(checked) => handleSelectUser(user.id, checked as boolean)}
+                            />
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-3">
                               <Avatar>

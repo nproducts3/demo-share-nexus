@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Layout } from '../components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -108,12 +107,12 @@ const Analytics = () => {
     });
   };
 
-  const downloadExcel = (data: any[], filename: string, headers: string[]) => {
+  const downloadExcel = (data: Record<string, string | number>[], filename: string, headers: string[]) => {
     // Create CSV content (Excel can open CSV files)
     const csvContent = [
       headers.join(','),
       ...data.map(row => headers.map(header => {
-        const value = row[header.toLowerCase().replace(/\s+/g, '')] || row[header] || '';
+        const value = row[header] ?? '';
         return `"${value}"`;
       }).join(','))
     ].join('\n');
@@ -146,33 +145,15 @@ const Analytics = () => {
   };
 
   const handleExportPerformanceTrends = () => {
-    // Create data for all 7 days of the week
-    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    
-    const data = daysOfWeek.map(day => {
-      const existingData = safeAnalyticsData.performanceTrends.find(trend => {
-        // Convert short day names (Mon, Tue, etc.) to full names for comparison
-        const dayMap: { [key: string]: string } = {
-          'Mon': 'Monday',
-          'Tue': 'Tuesday', 
-          'Wed': 'Wednesday',
-          'Thu': 'Thursday',
-          'Fri': 'Friday',
-          'Sat': 'Saturday',
-          'Sun': 'Sunday'
-        };
-        return dayMap[trend.name] === day;
-      });
-
-      return {
-        Day: day,
-        'Active Sessions': existingData?.activeSessions || 0,
-        'Cancelled Sessions': existingData?.cancelledSessions || 0
-      };
-    });
-    
-    downloadExcel(data, 'performance_trends', ['Day', 'Active Sessions', 'Cancelled Sessions']);
-    
+    console.log('Exporting trends:', safeAnalyticsData.performanceTrends);
+    // Export all 7 days from performanceTrends, including the date (formatted)
+    const data = safeAnalyticsData.performanceTrends.map(trend => ({
+      Day: trend.name,
+      Date: trend.date ? new Date(trend.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
+      'Active Sessions': trend.activeSessions,
+      'Cancelled Sessions': trend.cancelledSessions
+    }));
+    downloadExcel(data, 'performance_trends', ['Day', 'Date', 'Active Sessions', 'Cancelled Sessions']);
     toast({
       title: "Export Complete",
       description: "Performance Trends data exported successfully.",
@@ -319,11 +300,19 @@ const Analytics = () => {
                       ) : (
                         <TrendingDown className="h-4 w-4 text-red-600 mr-1" />
                       )}
-                      <span className={`text-sm font-medium ${
-                        metric.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {metric.change}
-                      </span>
+                      {(() => {
+                        // Extract numeric value from change string (e.g., '12.34%')
+                        const changeValue = parseFloat(metric.change.replace('%', ''));
+                        let color = 'text-red-600';
+                        if (changeValue > 30) color = 'text-green-600';
+                        else if (changeValue >= 15) color = 'text-orange-500';
+                        // <15 is red, 15-30 is orange, >30 is green
+                        return (
+                          <span className={`text-sm font-medium ${color}`}>
+                            {metric.change}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
                   <div className={`p-3 rounded-full ${metric.bgColor}`}>
@@ -352,13 +341,25 @@ const Analytics = () => {
               <ResponsiveContainer width="100%" height={300}>
                 <AreaChart data={safeAnalyticsData.performanceTrends}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="name" stroke="#64748b" />
+                  <XAxis 
+                    dataKey="name"
+                    stroke="#64748b"
+                    tickFormatter={(name) => name}
+                  />
                   <YAxis stroke="#64748b" />
                   <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px'
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        const trend = payload[0].payload;
+                        return (
+                          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: 8, padding: 12, minWidth: 150 }}>
+                            <div style={{ fontWeight: 600, marginBottom: 4 }}>{trend.name} <span style={{ color: '#64748b', fontWeight: 400, fontSize: 12 }}>({trend.date})</span></div>
+                            <div style={{ color: '#2563eb', fontWeight: 500, fontSize: 14 }}>Active Sessions : {trend.activeSessions}</div>
+                            <div style={{ color: '#ef4444', fontWeight: 500, fontSize: 14 }}>Cancelled Sessions : {trend.cancelledSessions}</div>
+                          </div>
+                        );
+                      }
+                      return null;
                     }}
                   />
                   <Area 
@@ -445,34 +446,36 @@ const Analytics = () => {
         <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-slate-50">
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Latest demo sessions and user interactions from this week</CardDescription>
+            <CardDescription>Latest demo sessions and user interactions from this 7-day window</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {safeAnalyticsData.recentActivity.length > 0 ? (
-                safeAnalyticsData.recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 rounded-lg bg-white border border-slate-200">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                        {activity.user.split(' ').map(n => n[0]).join('')}
+              <div className="overflow-x-auto overflow-y-auto max-h-80 min-w-[400px] p-1">
+                {safeAnalyticsData.recentActivity.length > 0 ? (
+                  safeAnalyticsData.recentActivity.map((activity, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 rounded-lg bg-white border border-slate-200 min-w-[350px]">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                          {activity.user.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div>
+                          <p className="font-medium text-slate-900">{activity.user}</p>
+                          <p className="text-sm text-slate-600">{activity.action}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-slate-900">{activity.user}</p>
-                        <p className="text-sm text-slate-600">{activity.action}</p>
+                      <div className="flex items-center space-x-3">
+                        {getActivityBadge(activity.status)}
+                        <span className="text-sm text-slate-500">{activity.time}</span>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      {getActivityBadge(activity.status)}
-                      <span className="text-sm text-slate-500">{activity.time}</span>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-slate-500">
+                    <Activity className="h-12 w-12 mx-auto mb-4 text-slate-300" />
+                    <p>No recent activity from this 7-day window</p>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-slate-500">
-                  <Activity className="h-12 w-12 mx-auto mb-4 text-slate-300" />
-                  <p>No recent activity from this week</p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

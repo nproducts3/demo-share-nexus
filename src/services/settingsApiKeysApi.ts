@@ -1,11 +1,10 @@
-
 import { BASE_URL } from './apiConfig';
 
 export interface SettingsApiKey {
   id?: string;
   name: string;
   key: string;
-  created: string;
+  createdAt: string;
   lastUsed: string;
 }
 

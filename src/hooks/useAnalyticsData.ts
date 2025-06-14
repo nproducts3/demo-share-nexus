@@ -11,6 +11,7 @@ interface AnalyticsData {
   conversionRate: number;
   performanceTrends: Array<{
     name: string;
+    date: string;
     activeSessions: number;
     cancelledSessions: number;
   }>;
@@ -126,37 +127,48 @@ const calculateAverageSessionTime = (sessions: DemoSession[]): string => {
   }
 };
 
+// Helper to get the 7-day window used by Performance Trends
+function getPerformanceTrendsWindow(sessions: DemoSession[]) {
+  if (!sessions.length) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return { startDate: today, endDate: new Date(today.getTime() + 6 * 24 * 60 * 60 * 1000) };
+  }
+  // Find the earliest session in the latest week
+  const sorted = [...sessions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const first = sorted[0];
+  const startDate = new Date(first.date);
+  startDate.setHours(0, 0, 0, 0);
+  const endDate = new Date(startDate);
+  endDate.setDate(startDate.getDate() + 6);
+  endDate.setHours(23, 59, 59, 999);
+  return { startDate, endDate };
+}
+
 const calculatePerformanceTrends = (sessions: DemoSession[]) => {
-  // Get start of current week (Monday)
-  const today = new Date();
-  const day = today.getDay(); // 0 = Sunday, 1 = Monday
-  const diffToMonday = day === 0 ? -6 : 1 - day; // if Sunday, go back 6 days, else go to Monday
-  const monday = new Date(today);
-  monday.setDate(today.getDate() + diffToMonday);
-  monday.setHours(0, 0, 0, 0);
-
-  const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-  return daysOfWeek.map((dayName, index) => {
-    const date = new Date(monday);
-    date.setDate(monday.getDate() + index);
+  const { startDate, endDate } = getPerformanceTrendsWindow(sessions);
+  return Array.from({ length: 7 }).map((_, i) => {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + i);
     const dayString = date.toISOString().split('T')[0];
-
+    // Always use UTC to avoid timezone issues
+    const utcDate = new Date(dayString + 'T00:00:00Z');
+    const dayName = utcDate.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+    // If you want the format as 'Thu (19 Jun)', use:
+    // const displayLabel = `${dayName} (${utcDate.getDate().toString().padStart(2, '0')} ${utcDate.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })})`;
     const daySessions = sessions.filter(session => {
       const sessionDate = new Date(session.date).toISOString().split('T')[0];
       return sessionDate === dayString;
     });
-
     const activeSessions = daySessions.filter(session =>
       session.status === 'upcoming' || session.status === 'completed'
     ).length;
-
     const cancelledSessions = daySessions.filter(session =>
       session.status === 'cancelled'
     ).length;
-
     return {
-      name: dayName,
+      name: dayName, // Change to displayLabel above if you want 'Thu (19 Jun)'
+      date: dayString,
       activeSessions,
       cancelledSessions
     };
@@ -198,10 +210,8 @@ const calculateUserEngagement = (users: User[]) => {
 };
 
 const calculateRecentActivity = (sessions: DemoSession[], users: User[]) => {
-  const currentWeekStart = new Date();
-  currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay());
-  currentWeekStart.setHours(0, 0, 0, 0);
-
+  // Use the same 7-day window as Performance Trends
+  const { startDate, endDate } = getPerformanceTrendsWindow(sessions);
   const activities: Array<{
     user: string;
     action: string;
@@ -210,20 +220,21 @@ const calculateRecentActivity = (sessions: DemoSession[], users: User[]) => {
     timestamp: Date;
   }> = [];
 
-  // Add recent session activities
+  // Only add recent session activities (no user activities)
   sessions.forEach(session => {
-    // Parse the session date and time from the API
-    const sessionDate = new Date(session.date);
-    const [hours, minutes] = session.time.split(':').map(Number);
-    sessionDate.setHours(hours, minutes, 0, 0);
+    let sessionDate: Date;
+    if (session.createdAt) {
+      sessionDate = new Date(session.createdAt);
+    } else {
+      sessionDate = new Date(session.date);
+      const [hours, minutes] = session.time.split(':').map(Number);
+      sessionDate.setHours(hours, minutes, 0, 0);
+    }
 
-    if (sessionDate >= currentWeekStart) {
-      // Find the user who created the session
+    if (sessionDate >= startDate && sessionDate <= endDate) {
       const creator = users.find(u => u.id === session.createdBy) || { name: session.createdBy || 'Unknown User' };
-      
       let action = '';
       const status = session.status;
-
       switch (session.status) {
         case 'upcoming':
           action = `Scheduled ${session.technology} Demo`;
@@ -238,7 +249,6 @@ const calculateRecentActivity = (sessions: DemoSession[], users: User[]) => {
           action = `${session.status} ${session.technology} Demo`;
           break;
       }
-
       activities.push({
         user: creator.name,
         action,
@@ -249,39 +259,9 @@ const calculateRecentActivity = (sessions: DemoSession[], users: User[]) => {
     }
   });
 
-  // Add recent user activities
-  users.forEach(user => {
-    // Parse the actual dates from user data
-    const joinDate = new Date(user.joinDate);
-    const lastLogin = new Date(user.lastLogin);
-
-    // Only add join activity if it's from this week
-    if (joinDate >= currentWeekStart) {
-      activities.push({
-        user: user.name,
-        action: `Created new account in ${user.department}`,
-        time: getRelativeTime(joinDate),
-        status: user.status || 'active',
-        timestamp: joinDate
-      });
-    } 
-    // Only add login activity if it's from this week AND not on the same day as join
-    else if (lastLogin >= currentWeekStart && 
-             lastLogin.toDateString() !== joinDate.toDateString()) {
-      activities.push({
-        user: user.name,
-        action: `Logged in from ${user.department}`,
-        time: getRelativeTime(lastLogin),
-        status: user.status || 'active',
-        timestamp: lastLogin
-      });
-    }
-  });
-
-  // Sort by timestamp (most recent first) and return top 5
+  // Sort by timestamp (most recent first) and return all activities in the 7-day window
   return activities
     .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-    .slice(0, 5)
     .map(({ timestamp, ...activity }) => activity);
 };
 

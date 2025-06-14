@@ -518,12 +518,7 @@ const DemoSessions = () => {
                   {selectedSessions.length} session(s) selected
                 </span>
                 <div className="flex space-x-2">
-                  <Button size="sm" variant="outline" onClick={() => handleBulkAction('export')}>
-                    Export Selected
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleBulkAction('cancel')}>
-                    Cancel Selected
-                  </Button>
+                 
                   <Button size="sm" variant="destructive" onClick={() => handleBulkAction('delete')}>
                     <Trash2 className="h-4 w-4 mr-1" />
                     Delete Selected

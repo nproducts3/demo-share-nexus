@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Key, Edit, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,7 +27,7 @@ const ApiKeysSettings = () => {
   const [apiKeyForm, setApiKeyForm] = useState<Omit<SettingsApiKey, 'id'>>({ 
     name: '', 
     key: '', 
-    created: '', 
+    createdAt: '', 
     lastUsed: '' 
   });
 
@@ -53,7 +52,7 @@ const ApiKeysSettings = () => {
     setApiKeyForm({ 
       name: '', 
       key: '', 
-      created: new Date().toISOString().split('T')[0], 
+      createdAt: new Date().toISOString().split('T')[0], 
       lastUsed: new Date().toISOString().split('T')[0] 
     });
     setApiKeyModalOpen(true);
@@ -64,7 +63,7 @@ const ApiKeysSettings = () => {
     setApiKeyForm({ 
       name: apiKey.name,
       key: apiKey.key,
-      created: apiKey.created,
+      createdAt: apiKey.createdAt,
       lastUsed: apiKey.lastUsed
     });
     setApiKeyModalOpen(true);
@@ -78,15 +77,19 @@ const ApiKeysSettings = () => {
   const handleApiKeyFormSave = async () => {
     try {
       setIsSaving(true);
-      
+      const payload = {
+        name: apiKeyForm.name,
+        key: apiKeyForm.key,
+        createdAt: apiKeyForm.createdAt,
+        lastUsed: apiKeyForm.lastUsed
+      };
       if (editingApiKey) {
-        const updatedKey = await settingsApiKeysApi.update(editingApiKey.id!, apiKeyForm);
+        const updatedKey = await settingsApiKeysApi.update(editingApiKey.id!, payload);
         setApiKeys((prev) => prev.map((k) => (k.id === editingApiKey.id ? updatedKey : k)));
       } else {
-        const newKey = await settingsApiKeysApi.create(apiKeyForm);
+        const newKey = await settingsApiKeysApi.create(payload);
         setApiKeys((prev) => [...prev, newKey]);
       }
-      
       setApiKeyModalOpen(false);
       toast({
         title: editingApiKey ? "API Key Updated" : "API Key Created",
@@ -154,7 +157,7 @@ const ApiKeysSettings = () => {
                     <div className="font-medium">{key.name}</div>
                     <div className="text-sm text-gray-500 font-mono">{key.key}</div>
                     <div className="text-xs text-gray-400">
-                      Created: {new Date(key.created).toLocaleDateString()} •
+                      Created: {new Date(key.createdAt).toLocaleDateString()} •
                       Last used: {new Date(key.lastUsed).toLocaleDateString()}
                     </div>
                   </div>
@@ -199,14 +202,13 @@ const ApiKeysSettings = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="created">Created Date</Label>
+                    <Label htmlFor="createdAt">Created Date</Label>
                     <Input
-                      id="created"
-                      name="created"
+                      id="createdAt"
+                      name="createdAt"
                       type="date"
-                      value={apiKeyForm.created}
+                      value={apiKeyForm.createdAt}
                       onChange={handleApiKeyFormChange}
-                      readOnly={!editingApiKey}
                     />
                   </div>
                   <div className="space-y-2">
@@ -217,7 +219,6 @@ const ApiKeysSettings = () => {
                       type="date"
                       value={apiKeyForm.lastUsed}
                       onChange={handleApiKeyFormChange}
-                      readOnly={!editingApiKey}
                     />
                   </div>
                 </div>
