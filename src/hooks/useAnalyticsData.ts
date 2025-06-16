@@ -289,21 +289,13 @@ const calculateConversionRate = (sessions: DemoSession[]): number => {
     return 0;
   }
 
-  // Get sessions with ratings (completed sessions)
-  const ratedSessions = sessions.filter(session => session.rating && session.rating > 0);
+  // Get sessions with ratings
+  const ratedSessions = sessions.filter(session => session.rating !== null && session.rating !== undefined);
   console.log('Rated sessions:', ratedSessions.length);
   console.log('Session ratings:', ratedSessions.map(s => s.rating));
 
-  // Calculate average rating
-  const totalRating = ratedSessions.reduce((sum, session) => sum + (session.rating || 0), 0);
-  const averageRating = ratedSessions.length > 0 ? totalRating / ratedSessions.length : 0;
-  console.log('Average rating:', averageRating);
-
-  // Calculate conversion rate based on rating
-  // Consider sessions with rating >= 4 as successful conversions
-  const successfulSessions = ratedSessions.filter(session => (session.rating || 0) >= 4).length;
-  const conversionRate = (successfulSessions / totalSessions) * 100;
-  console.log('Successful sessions:', successfulSessions);
+  // Calculate conversion rate based on rated sessions
+  const conversionRate = (ratedSessions.length / totalSessions) * 100;
   console.log('Raw conversion rate:', conversionRate);
 
   // Round to 1 decimal place

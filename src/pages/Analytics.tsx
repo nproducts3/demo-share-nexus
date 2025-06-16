@@ -83,8 +83,8 @@ const Analytics = () => {
     },
     {
       title: 'Conversion Rate',
-      value: safeAnalyticsData.conversionRate.toString(),
-      change: `${(safeAnalyticsData.conversionRate / 50).toFixed(2)}%`,
+      value: `${safeAnalyticsData.conversionRate.toFixed(1)}%`,
+      change: `${((safeAnalyticsData.conversionRate - 0) / 50).toFixed(2)}%`,
       trend: '',
       icon: Target,
       color: 'text-purple-600',

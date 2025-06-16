@@ -293,7 +293,7 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="attendees">Current Attendees</Label>
                 <Input
@@ -307,7 +307,7 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
                 />
                 {errors.attendees && <p className="text-red-500 text-sm mt-1">{errors.attendees}</p>}
               </div>
-            </div>
+            </div> */}
           </div>
 
           <div className="flex justify-end space-x-3 pt-6 border-t">

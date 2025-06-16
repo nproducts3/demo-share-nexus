@@ -1,4 +1,3 @@
-
 import { BASE_URL } from './apiConfig';
 import { DemoSession, ApiError, ApiErrorResponse } from '../types/api';
 
@@ -104,7 +103,18 @@ export const sessionApi = {
             (cleanedData as any)[key] = value as 'PROJECT_BASED' | 'PRODUCT_BASED';
             break;
           case 'currentStatus':
-            (cleanedData as any)[key] = value as string;
+            // Convert frontend format to backend format
+            const convertToBackendFormat = (status: string): string => {
+              switch (status) {
+                case 'In Progress':
+                  return 'In_Progress';
+                case 'On Hold':
+                  return 'On_Hold';
+                default:
+                  return status;
+              }
+            };
+            (cleanedData as any)[key] = convertToBackendFormat(value as string);
             break;
           case 'sprintName':
           case 'feedback':
@@ -139,6 +149,21 @@ export const sessionApi = {
       
       const responseData = await response.json();
       console.log('Success response:', responseData);
+
+      // Convert backend format to frontend format for currentStatus
+      if (responseData.currentStatus) {
+        const convertToFrontendFormat = (status: string): string => {
+          switch (status) {
+            case 'In_Progress':
+              return 'In Progress';
+            case 'On_Hold':
+              return 'On Hold';
+            default:
+              return status;
+          }
+        };
+        responseData.currentStatus = convertToFrontendFormat(responseData.currentStatus);
+      }
 
       return responseData;
     } catch (error) {
