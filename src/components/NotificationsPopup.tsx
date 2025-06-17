@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { useNotifications } from '../contexts/NotificationsContext';
+import { useNotifications, Notification } from '../contexts/NotificationsContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -35,7 +34,7 @@ export const NotificationsPopup: React.FC = () => {
     }
   };
 
-  const handleNotificationClick = (notification: any) => {
+  const handleNotificationClick = (notification: Notification) => {
     if (!notification.read) {
       markAsRead(notification.id);
     }

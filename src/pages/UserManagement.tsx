@@ -71,7 +71,7 @@ const UserManagement = () => {
         setTotalItems(0);
         setCurrentPage(1);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching users:', error);
       setUsers([]);
       setTotalPages(1);
@@ -190,7 +190,7 @@ const UserManagement = () => {
       // Optionally fetch the latest user data before navigation
       await userApi.getById(userId);
       navigate(`/user-profile/${userId}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching user details:', error);
       toast({
         title: "Error",
@@ -252,11 +252,11 @@ const UserManagement = () => {
         title: "Success",
         description: `User "${result.name}" has been updated successfully.`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating user:', error);
       toast({
         title: "Error",
-        description: error.data?.message || "Failed to update user. Please try again.",
+        description: "Failed to update user. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -284,11 +284,11 @@ const UserManagement = () => {
         description: `"${userToDelete.name}" has been deleted successfully.`,
         variant: "destructive"
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting user:', error);
       toast({
         title: "Error",
-        description: error.data?.message || "Failed to delete user. Please try again.",
+        description: "Failed to delete user. Please try again.",
         variant: "destructive"
       });
     } finally {

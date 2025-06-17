@@ -7,17 +7,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Plus } from 'lucide-react';
 
+interface User {
+  id?: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'employee';
+  status: 'active' | 'inactive' | 'pending';
+  department: string;
+  phone?: string;
+  skillLevel: 'Beginner' | 'Intermediate' | 'Advanced';
+  sessionsAttended: number;
+  sessionsCreated: number;
+}
+
 interface EditUserModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  user: any;
-  onEditUser: (user: any) => void;
+  user: User;
+  onEditUser: (user: User) => void;
   loading: boolean;
 }
 
 export const EditUserModal: React.FC<EditUserModalProps> = ({ open, setOpen, user, onEditUser, loading }) => {
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Omit<User, 'id'>>({
     name: '',
     email: '',
     role: 'employee',
@@ -91,7 +104,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ open, setOpen, use
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="edit-role">Role</Label>
-              <Select value={formData.role} onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}>
+              <Select value={formData.role} onValueChange={(value) => setFormData(prev => ({ ...prev, role: value as 'admin' | 'employee' }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -103,7 +116,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ open, setOpen, use
             </div>
             <div>
               <Label htmlFor="edit-status">Status</Label>
-              <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}>
+              <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as 'active' | 'inactive' | 'pending' }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -128,7 +141,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ open, setOpen, use
             </div>
             <div>
               <Label htmlFor="edit-skillLevel">Skill Level</Label>
-              <Select value={formData.skillLevel} onValueChange={(value) => setFormData(prev => ({ ...prev, skillLevel: value }))}>
+              <Select value={formData.skillLevel} onValueChange={(value) => setFormData(prev => ({ ...prev, skillLevel: value as 'Beginner' | 'Intermediate' | 'Advanced' }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -188,14 +201,14 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ open, setOpen, use
 };
 
 interface AddUserModalProps {
-  onAddUser: (user: any) => void;
+  onAddUser: (user: User) => void;
 }
 
 export const AddUserModal: React.FC<AddUserModalProps> = ({ onAddUser }) => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Omit<User, 'id'>>({
     name: '',
     email: '',
     role: 'employee',
@@ -277,7 +290,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({ onAddUser }) => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="role">Role</Label>
-                <Select value={formData.role} onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}>
+                <Select value={formData.role} onValueChange={(value) => setFormData(prev => ({ ...prev, role: value as 'admin' | 'employee' }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -289,7 +302,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({ onAddUser }) => {
               </div>
               <div>
                 <Label htmlFor="status">Status</Label>
-                <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}>
+                <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as 'active' | 'inactive' | 'pending' }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -314,7 +327,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({ onAddUser }) => {
               </div>
               <div>
                 <Label htmlFor="skillLevel">Skill Level</Label>
-                <Select value={formData.skillLevel} onValueChange={(value) => setFormData(prev => ({ ...prev, skillLevel: value }))}>
+                <Select value={formData.skillLevel} onValueChange={(value) => setFormData(prev => ({ ...prev, skillLevel: value as 'Beginner' | 'Intermediate' | 'Advanced' }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

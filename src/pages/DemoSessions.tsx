@@ -189,11 +189,11 @@ const DemoSessions = () => {
         title: "Type Updated",
         description: "Session type has been updated successfully.",
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error updating session type:', error);
       toast({
         title: "Error",
-        description: "Failed to update session type. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to update session type. Please try again.",
         variant: "destructive"
       });
     }
@@ -246,31 +246,45 @@ const DemoSessions = () => {
     }
   };
 
-  const handleCreateSession = async (sessionData: any) => {
+  const handleCreateSession = async (sessionData: {
+    title: string;
+    technology: string;
+    date: string;
+    time: string;
+    description: string;
+    location: string;
+    maxAttendees: number;
+    attendees: number;
+    difficulty: string;
+    prerequisites: string;
+    duration: string;
+    createdBy: string;
+    status: string;
+  }) => {
+    setLoading(true);
     try {
-      console.log('Creating session with data:', sessionData);
       const newSession = await sessionApi.create({
         ...sessionData,
-        createdBy: sessionData.createdBy || 'Current Admin',
-        attendees: 0,
-        type: 'PRODUCT_BASED'
+        type: 'PROJECT_BASED' as const,
+        duration: parseInt(sessionData.duration) || 0,
+        difficulty: sessionData.difficulty as 'Beginner' | 'Intermediate' | 'Advanced',
+        status: sessionData.status as 'upcoming' | 'completed' | 'cancelled'
       });
-      console.log('Created session:', newSession);
-      
-      await fetchSessions(currentPage); // Refresh current page
+      setDemoSessions(prev => [newSession, ...prev]);
       setIsCreateModalOpen(false);
-      
       toast({
-        title: "Session Created",
-        description: `"${newSession.title}" has been created successfully.`,
+        title: "Success",
+        description: "Demo session created successfully.",
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error creating session:', error);
       toast({
         title: "Error",
         description: "Failed to create session. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -293,11 +307,11 @@ const DemoSessions = () => {
         title: "Success",
         description: `Session "${result.title}" has been updated successfully.`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating session:', error);
       toast({
         title: "Error",
-        description: error.data?.message || "Failed to update session. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to update session. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -590,7 +604,7 @@ const DemoSessions = () => {
                             <div className="flex items-center space-x-1">
                               <Select
                                 value={session.type}
-                                onValueChange={(value) => handleTypeEdit(session.id, value as any)}
+                                onValueChange={(value: 'PROJECT_BASED' | 'PRODUCT_BASED') => handleTypeEdit(session.id, value)}
                               >
                                 <SelectTrigger className="w-32 h-8">
                                   <SelectValue />

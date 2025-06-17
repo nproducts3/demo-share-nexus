@@ -15,8 +15,7 @@ import {
   DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '../contexts/AuthContext';
-import { useAdmin } from '../contexts/AdminContext';
+import { useAuth } from '../hooks/use-auth';
 import { useNotifications } from '../contexts/NotificationsContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -38,7 +37,6 @@ const navigationItems = [
 
 export const Header: React.FC = () => {
   const { user, logout } = useAuth();
-  const { isAdmin } = useAdmin();
   const { unreadCount } = useNotifications();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');

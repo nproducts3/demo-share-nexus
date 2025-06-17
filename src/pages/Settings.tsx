@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Layout } from '../components/Layout';
-import { useAdmin } from '../contexts/AdminContext';
+import { useAdmin } from '../hooks/use-admin';
 import { useToast } from '@/hooks/use-toast';
 import { useSearchParams } from 'react-router-dom';
 import { teamSettingsApi, type TeamSettings } from '../services/teamSettingsApi';

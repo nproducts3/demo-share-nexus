@@ -7,10 +7,26 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 
+interface SessionData {
+  title: string;
+  technology: string;
+  date: string;
+  time: string;
+  description: string;
+  location: string;
+  maxAttendees: number;
+  attendees: number;
+  difficulty: string;
+  prerequisites: string;
+  duration: string;
+  createdBy: string;
+  status: string;
+}
+
 interface CreateSessionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (sessionData: any) => void;
+  onSubmit: (sessionData: SessionData) => void;
 }
 
 const technologies = [

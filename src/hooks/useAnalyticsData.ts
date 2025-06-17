@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { sessionApi, userApi } from '../services/api';
 import { DemoSession, User } from '../types/api';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface AnalyticsData {
   totalSessions: number;

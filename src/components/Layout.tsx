@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/use-auth';
 import { AppSidebar } from './AppSidebar';
 import { Header } from './Header';
 import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';

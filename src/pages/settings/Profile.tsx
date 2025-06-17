@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { User2, Edit, X, Save, Loader2, Mail, Phone, Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,8 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Layout } from '../../components/Layout';
-import { useAdmin } from '../../contexts/AdminContext';
+import { useAdmin } from '../../hooks/use-admin';
 import { useToast } from '@/hooks/use-toast';
+import { User, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const ProfileSettings = () => {
   const { adminProfile, updateAdminProfile, isLoading: adminLoading } = useAdmin();

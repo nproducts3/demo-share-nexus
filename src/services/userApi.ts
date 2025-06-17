@@ -1,6 +1,11 @@
-
 import { BASE_URL } from './apiConfig';
 import { User } from '../types/api';
+
+// Define error interface
+interface ApiError extends Error {
+  status?: number;
+  data?: unknown;
+}
 
 // Define pagination interface for users
 interface PaginatedResponse<T> {
@@ -46,7 +51,7 @@ export const userApi = {
       return responseData;
     }
 
-    const error = new Error(responseData.message || 'Failed to create user') as any;
+    const error = new Error(responseData.message || 'Failed to create user') as ApiError;
     error.status = response.status;
     error.data = responseData;
     throw error;
@@ -67,7 +72,7 @@ export const userApi = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      const error = new Error('Failed to update user') as any;
+      const error = new Error('Failed to update user') as ApiError;
       error.status = response.status;
       error.data = errorData;
       throw error;
@@ -84,7 +89,7 @@ export const userApi = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      const error = new Error('Failed to delete user') as any;
+      const error = new Error('Failed to delete user') as ApiError;
       error.status = response.status;
       error.data = errorData;
       throw error;
@@ -96,7 +101,7 @@ export const userApi = {
     const response = await fetch(`${BASE_URL}/api/users/${id}`);
     if (!response.ok) {
       const errorData = await response.json();
-      const error = new Error('Failed to fetch user') as any;
+      const error = new Error('Failed to fetch user') as ApiError;
       error.status = response.status;
       error.data = errorData;
       throw error;

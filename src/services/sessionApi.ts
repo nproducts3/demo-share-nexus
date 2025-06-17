@@ -91,18 +91,18 @@ export const sessionApi = {
           case 'numberOfTasks':
           case 'numberOfBugs':
           case 'rating':
-            (cleanedData as any)[key] = Number(value);
+            (cleanedData as Record<string, unknown>)[key] = Number(value);
             break;
           case 'status':
-            (cleanedData as any)[key] = value as 'upcoming' | 'completed' | 'cancelled';
+            (cleanedData as Record<string, unknown>)[key] = value as 'upcoming' | 'completed' | 'cancelled';
             break;
           case 'difficulty':
-            (cleanedData as any)[key] = value as 'Beginner' | 'Intermediate' | 'Advanced';
+            (cleanedData as Record<string, unknown>)[key] = value as 'Beginner' | 'Intermediate' | 'Advanced';
             break;
           case 'type':
-            (cleanedData as any)[key] = value as 'PROJECT_BASED' | 'PRODUCT_BASED';
+            (cleanedData as Record<string, unknown>)[key] = value as 'PROJECT_BASED' | 'PRODUCT_BASED';
             break;
-          case 'currentStatus':
+          case 'currentStatus': {
             // Convert frontend format to backend format
             const convertToBackendFormat = (status: string): string => {
               switch (status) {
@@ -114,15 +114,16 @@ export const sessionApi = {
                   return status;
               }
             };
-            (cleanedData as any)[key] = convertToBackendFormat(value as string);
+            (cleanedData as Record<string, unknown>)[key] = convertToBackendFormat(value as string);
             break;
+          }
           case 'sprintName':
           case 'feedback':
           case 'prerequisites':
-            (cleanedData as any)[key] = value || '';
+            (cleanedData as Record<string, unknown>)[key] = value || '';
             break;
           default:
-            (cleanedData as any)[key] = value;
+            (cleanedData as Record<string, unknown>)[key] = value;
         }
       }
     });

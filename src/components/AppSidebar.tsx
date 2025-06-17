@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/use-auth';
 import { Calendar, Users, User, Home, BarChart3, Settings, PanelLeft, Bell, Key, ChevronDown } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {

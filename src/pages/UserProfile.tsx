@@ -24,11 +24,11 @@ const UserProfile = () => {
         }
         const userData = await userApi.getById(userId);
         setUser(userData);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error fetching user:', error);
         toast({
           title: "Error",
-          description: error.data?.message || "Failed to fetch user details.",
+          description: "Failed to fetch user data. Please try again.",
           variant: "destructive"
         });
       } finally {

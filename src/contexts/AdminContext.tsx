@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { useState, ReactNode, useEffect } from 'react';
 import { settingsApi, SettingsProfile } from '../services/settingsApi';
+import { AdminContext } from './admin-context';
 
 interface AdminProfile {
   id?: string;
@@ -10,22 +11,6 @@ interface AdminProfile {
   company: string;
   bio: string;
 }
-
-interface AdminContextType {
-  adminProfile: AdminProfile;
-  updateAdminProfile: (updates: Partial<AdminProfile>) => Promise<void>;
-  isLoading: boolean;
-}
-
-const AdminContext = createContext<AdminContextType | undefined>(undefined);
-
-export const useAdmin = () => {
-  const context = useContext(AdminContext);
-  if (context === undefined) {
-    throw new Error('useAdmin must be used within an AdminProvider');
-  }
-  return context;
-};
 
 interface AdminProviderProps {
   children: ReactNode;

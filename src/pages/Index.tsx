@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/use-auth';
 import { LoginForm } from '../components/LoginForm';
 import { LandingPage } from '../components/LandingPage';
 import { AdminDashboard } from '../components/AdminDashboard';

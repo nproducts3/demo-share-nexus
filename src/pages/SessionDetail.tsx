@@ -122,20 +122,13 @@ const SessionDetail = () => {
       const feedbackFields = ['feedback'];
 
       if (sprintFields.includes(field)) {
-        // Always send all sprint fields
-        sprintFields.forEach(f => {
-          updateData[f] = editValues[f as keyof typeof editValues] ?? session[f as keyof typeof session] ?? '';
-        });
+        // Only send the specific sprint field being updated
+        updateData[field] = editValues[field as keyof typeof editValues] ?? session[field as keyof typeof session] ?? '';
         console.log('Sprint updateData:', updateData);
       } else if (feedbackFields.includes(field)) {
-        // Always send all feedback and sprint fields
-        feedbackFields.forEach(f => {
-          updateData[f] = editValues[f as keyof typeof editValues] ?? session[f as keyof typeof session] ?? '';
-        });
-        sprintFields.forEach(f => {
-          updateData[f] = editValues[f as keyof typeof editValues] ?? session[f as keyof typeof session] ?? '';
-        });
-        console.log('Feedback + Sprint updateData:', updateData);
+        // Only send the feedback field being updated
+        updateData[field] = editValues[field as keyof typeof editValues] ?? session[field as keyof typeof session] ?? '';
+        console.log('Feedback updateData:', updateData);
       } else if (field === 'currentStatus') {
         // Convert frontend format to backend format for API
         const backendStatus = convertFrontendToBackend(editValues.currentStatus!);

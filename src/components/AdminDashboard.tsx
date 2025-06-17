@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { DemoSessionCard } from './DemoSessionCard';
 import { EditSessionModal } from './EditSessionModal';
 import { sessionApi, DemoSession } from '../services/api';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export const AdminDashboard: React.FC = () => {
   const [demoSessions, setDemoSessions] = useState<DemoSession[]>([]);
