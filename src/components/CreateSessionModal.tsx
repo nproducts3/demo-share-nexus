@@ -71,7 +71,7 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validation
@@ -93,30 +93,37 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
       return;
     }
 
-    // Submit the form
-    onSubmit({
-      ...formData,
-      maxAttendees: parseInt(formData.maxAttendees),
-      attendees: parseInt(formData.attendees),
-      status: 'upcoming'
-    });
+    try {
+      // Submit the form with auto-incrementing ID handled by the API
+      await onSubmit({
+        ...formData,
+        maxAttendees: parseInt(formData.maxAttendees),
+        attendees: parseInt(formData.attendees),
+        status: 'upcoming'
+      });
 
-    // Reset form
-    setFormData({
-      title: '',
-      technology: '',
-      date: '',
-      time: '',
-      description: '',
-      location: '',
-      maxAttendees: '',
-      attendees: '0',
-      difficulty: '',
-      prerequisites: '',
-      duration: '',
-      createdBy: ''
-    });
-    setErrors({});
+      // Reset form
+      setFormData({
+        title: '',
+        technology: '',
+        date: '',
+        time: '',
+        description: '',
+        location: '',
+        maxAttendees: '',
+        attendees: '0',
+        difficulty: '',
+        prerequisites: '',
+        duration: '',
+        createdBy: ''
+      });
+      setErrors({});
+    } catch (error) {
+      console.error('Error creating session:', error);
+      setErrors({
+        submit: 'Failed to create session. Please try again.'
+      });
+    }
   };
 
   if (!isOpen) return null;

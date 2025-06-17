@@ -1,4 +1,3 @@
-
 import { BASE_URL } from './apiConfig';
 
 export interface SettingsProfile {
@@ -14,7 +13,7 @@ export interface SettingsProfile {
 export const settingsApi = {
   // Fetch all settings profiles
   getProfiles: async (): Promise<SettingsProfile[]> => {
-    const response = await fetch(`${BASE_URL}/api/settings-profiles`);
+    const response = await fetch(`${BASE_URL}/api/settings/profiles`);
     if (!response.ok) {
       throw new Error('Failed to fetch settings profiles');
     }
@@ -23,7 +22,7 @@ export const settingsApi = {
 
   // Create new settings profile
   createProfile: async (profile: Omit<SettingsProfile, 'id'>): Promise<SettingsProfile> => {
-    const response = await fetch(`${BASE_URL}/api/settings-profiles`, {
+    const response = await fetch(`${BASE_URL}/api/settings/profiles`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -38,7 +37,7 @@ export const settingsApi = {
 
   // Update settings profile by ID
   updateProfile: async (id: string, profile: Partial<SettingsProfile>): Promise<SettingsProfile> => {
-    const response = await fetch(`${BASE_URL}/api/settings-profiles/${id}`, {
+    const response = await fetch(`${BASE_URL}/api/settings/profiles/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -53,7 +52,7 @@ export const settingsApi = {
 
   // Delete settings profile by ID
   deleteProfile: async (id: string): Promise<void> => {
-    const response = await fetch(`${BASE_URL}/api/settings-profiles/${id}`, {
+    const response = await fetch(`${BASE_URL}/api/settings/profiles/${id}`, {
       method: 'DELETE',
     });
     if (!response.ok) {

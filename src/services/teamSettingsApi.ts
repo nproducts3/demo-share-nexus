@@ -1,4 +1,3 @@
-
 import { BASE_URL } from './apiConfig';
 
 export interface TeamSettings {
@@ -12,7 +11,7 @@ export interface TeamSettings {
 export const teamSettingsApi = {
   // Fetch all team settings
   getSettings: async (): Promise<TeamSettings[]> => {
-    const response = await fetch(`${BASE_URL}/api/settings-team`);
+    const response = await fetch(`${BASE_URL}/api/settings/team`);
     if (!response.ok) {
       throw new Error('Failed to fetch team settings');
     }
@@ -21,7 +20,7 @@ export const teamSettingsApi = {
 
   // Create new team settings
   createSettings: async (settings: Omit<TeamSettings, 'id'>): Promise<TeamSettings> => {
-    const response = await fetch(`${BASE_URL}/api/settings-team`, {
+    const response = await fetch(`${BASE_URL}/api/settings/team`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -36,7 +35,7 @@ export const teamSettingsApi = {
 
   // Update team settings by ID
   updateSettings: async (id: string, settings: Partial<TeamSettings>): Promise<TeamSettings> => {
-    const response = await fetch(`${BASE_URL}/api/settings-team/${id}`, {
+    const response = await fetch(`${BASE_URL}/api/settings/team/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -51,7 +50,7 @@ export const teamSettingsApi = {
 
   // Delete team settings by ID
   deleteSettings: async (id: string): Promise<void> => {
-    const response = await fetch(`${BASE_URL}/api/settings-team/${id}`, {
+    const response = await fetch(`${BASE_URL}/api/settings/team/${id}`, {
       method: 'DELETE',
     });
     if (!response.ok) {

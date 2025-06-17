@@ -30,7 +30,18 @@ const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<{
+    id?: string;
+    name: string;
+    email: string;
+    role: 'admin' | 'employee';
+    status: 'active' | 'inactive' | 'pending';
+    department: string;
+    phone?: string;
+    skillLevel: 'Beginner' | 'Intermediate' | 'Advanced';
+    sessionsAttended: number;
+    sessionsCreated: number;
+  } | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [editLoading, setEditLoading] = useState(false);
@@ -111,17 +122,24 @@ const UserManagement = () => {
     return matchesSearch && matchesRole && matchesStatus && matchesDepartment && matchesSkillLevel;
   });
 
-  const handleAddUser = async (userData: Omit<User, 'id'>) => {
+  const handleAddUser = async (user: { 
+    name: string;
+    email: string;
+    role: 'admin' | 'employee';
+    status: 'active' | 'inactive' | 'pending';
+    department: string;
+    phone?: string;
+    skillLevel: 'Beginner' | 'Intermediate' | 'Advanced';
+    sessionsAttended: number;
+    sessionsCreated: number;
+  }) => {
     try {
       const newUserData = {
-        ...userData,
-        status: userData.status || 'active',
-        sessionsAttended: userData.sessionsAttended ?? 0,
-        sessionsCreated: userData.sessionsCreated ?? 0,
+        ...user,
         totalHours: 0,
         joinDate: new Date().toISOString().split('T')[0],
         lastLogin: new Date().toISOString(),
-        avatar: userData.avatar || ''
+        avatar: ''
       };
   
       // Create the user via API
@@ -135,11 +153,11 @@ const UserManagement = () => {
         description: `${createdUser.name} has been added successfully.`,
       });
   
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating user:', error);
       
       // If the error is due to a conflict (409), show a user-friendly message
-      if (error.response?.status === 409) {
+      if (error instanceof Error && 'status' in error && error.status === 409) {
         toast({
           title: "Error",
           description: "This email is already in use. Please try another one.",
@@ -148,7 +166,7 @@ const UserManagement = () => {
       } else {
         toast({
           title: "Error",
-          description: error.data?.message || "Failed to create user. Please try again.",
+          description: "Failed to create user. Please try again.",
           variant: "destructive"
         });
       }
@@ -236,32 +254,65 @@ const UserManagement = () => {
   };
 
   const handleEditUser = (user: User) => {
-    setEditingUser(user);
+    setEditingUser({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role as 'admin' | 'employee',
+      status: user.status as 'active' | 'inactive' | 'pending',
+      department: user.department,
+      phone: user.phone,
+      skillLevel: user.skillLevel as 'Beginner' | 'Intermediate' | 'Advanced',
+      sessionsAttended: user.sessionsAttended,
+      sessionsCreated: user.sessionsCreated
+    });
     setIsEditModalOpen(true);
   };
 
-  const handleEditUserSubmit = async (updatedUser: User) => {
+  const handleEditUserSubmit = (user: { 
+    name: string;
+    email: string;
+    role: 'admin' | 'employee';
+    status: 'active' | 'inactive' | 'pending';
+    department: string;
+    phone?: string;
+    skillLevel: 'Beginner' | 'Intermediate' | 'Advanced';
+    sessionsAttended: number;
+    sessionsCreated: number;
+  }) => {
+    if (!editingUser?.id) return;
+    
     setEditLoading(true);
-    try {
-      const result = await userApi.update(updatedUser.id, updatedUser);
-      // Refresh current page to show updated user
-      await fetchUsers(currentPage);
-      setIsEditModalOpen(false);
-      setEditingUser(null);
-      toast({
-        title: "Success",
-        description: `User "${result.name}" has been updated successfully.`,
+    const updatedUser = {
+      ...user,
+      id: editingUser.id,
+      totalHours: 0,
+      joinDate: new Date().toISOString().split('T')[0],
+      lastLogin: new Date().toISOString(),
+      avatar: ''
+    };
+    
+    userApi.update(updatedUser.id, updatedUser)
+      .then(result => {
+        fetchUsers(currentPage);
+        setIsEditModalOpen(false);
+        setEditingUser(null);
+        toast({
+          title: "Success",
+          description: `User "${result.name}" has been updated successfully.`,
+        });
+      })
+      .catch(error => {
+        console.error('Error updating user:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update user. Please try again.",
+          variant: "destructive"
+        });
+      })
+      .finally(() => {
+        setEditLoading(false);
       });
-    } catch (error: unknown) {
-      console.error('Error updating user:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update user. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setEditLoading(false);
-    }
   };
 
   const handleDeleteUser = (user: User) => {
@@ -528,7 +579,7 @@ const UserManagement = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-[600px]">
+                <ScrollArea className={`w-full ${filteredUsers.length === 0 ? 'h-[100px]' : 'h-auto'}`}>
                   <Table>
                     <TableHeader>
                       <TableRow>

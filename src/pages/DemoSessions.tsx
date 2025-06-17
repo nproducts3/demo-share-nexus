@@ -554,7 +554,7 @@ const DemoSessions = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[600px] w-full">
+            <ScrollArea className={`w-full ${filteredSessions.length === 0 ? 'h-[100px]' : 'h-auto'}`}>
               <div className="min-w-[1200px]">
                 <Table>
                   <TableHeader>

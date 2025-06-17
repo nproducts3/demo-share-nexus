@@ -1,4 +1,3 @@
-
 import { BASE_URL } from './apiConfig';
 
 export interface NotificationSettings {
@@ -13,7 +12,7 @@ export interface NotificationSettings {
 export const notificationSettingsApi = {
   // Fetch all notification settings
   getSettings: async (): Promise<NotificationSettings[]> => {
-    const response = await fetch(`${BASE_URL}/api/notification-settings`);
+    const response = await fetch(`${BASE_URL}/api/settings/notifications`);
     if (!response.ok) {
       throw new Error('Failed to fetch notification settings');
     }
@@ -22,7 +21,7 @@ export const notificationSettingsApi = {
 
   // Create new notification settings
   createSettings: async (settings: Omit<NotificationSettings, 'id'>): Promise<NotificationSettings> => {
-    const response = await fetch(`${BASE_URL}/api/notification-settings`, {
+    const response = await fetch(`${BASE_URL}/api/settings/notifications`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -37,7 +36,7 @@ export const notificationSettingsApi = {
 
   // Update notification settings by ID
   updateSettings: async (id: string, settings: Partial<NotificationSettings>): Promise<NotificationSettings> => {
-    const response = await fetch(`${BASE_URL}/api/notification-settings/${id}`, {
+    const response = await fetch(`${BASE_URL}/api/settings/notifications/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -52,7 +51,7 @@ export const notificationSettingsApi = {
 
   // Delete notification settings by ID
   deleteSettings: async (id: string): Promise<void> => {
-    const response = await fetch(`${BASE_URL}/api/notification-settings/${id}`, {
+    const response = await fetch(`${BASE_URL}/api/settings/notifications/${id}`, {
       method: 'DELETE',
     });
     if (!response.ok) {

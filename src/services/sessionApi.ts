@@ -42,12 +42,27 @@ export const sessionApi = {
 
   // Create new session
   create: async (sessionData: Omit<DemoSession, 'id'>): Promise<DemoSession> => {
+    // Get all existing sessions to determine the next ID
+    const existingSessions = await sessionApi.getAll();
+    const sessions = Array.isArray(existingSessions) ? existingSessions : existingSessions.data;
+    
+    // Find the highest ID and increment it
+    const highestId = sessions.reduce((max, session) => {
+      const currentId = parseInt(session.id);
+      return currentId > max ? currentId : max;
+    }, 0);
+    
+    const newId = (highestId + 1).toString();
+    
     const response = await fetch(`${BASE_URL}/api/sessions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(sessionData),
+      body: JSON.stringify({
+        ...sessionData,
+        id: newId
+      }),
     });
     if (!response.ok) {
       throw new Error('Failed to create session');
