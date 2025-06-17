@@ -122,8 +122,13 @@ const SessionDetail = () => {
       const feedbackFields = ['feedback'];
 
       if (sprintFields.includes(field)) {
-        // Only send the specific sprint field being updated
-        updateData[field] = editValues[field as keyof typeof editValues] ?? session[field as keyof typeof session] ?? '';
+        // Preserve existing sprint information and only update the changed field
+        updateData = {
+          sprintName: field === 'sprintName' ? editValues.sprintName : session.sprintName,
+          storyPoints: field === 'storyPoints' ? editValues.storyPoints : session.storyPoints,
+          numberOfTasks: field === 'numberOfTasks' ? editValues.numberOfTasks : session.numberOfTasks,
+          numberOfBugs: field === 'numberOfBugs' ? editValues.numberOfBugs : session.numberOfBugs
+        };
         console.log('Sprint updateData:', updateData);
       } else if (feedbackFields.includes(field)) {
         // Only send the feedback field being updated
@@ -153,21 +158,31 @@ const SessionDetail = () => {
         convertedResult.currentStatus = convertBackendToFrontend(result.currentStatus as string);
       }
       
-      // Update the session state with the converted response data
+      // Update the session state with the converted response data while preserving existing data
       setSession(prev => {
         if (!prev) return null;
         const updatedSession: ExtendedDemoSession = {
           ...prev,
-          ...convertedResult
+          ...convertedResult,
+          // Preserve sprint information if not being updated
+          sprintName: sprintFields.includes(field) ? convertedResult.sprintName : prev.sprintName,
+          storyPoints: sprintFields.includes(field) ? convertedResult.storyPoints : prev.storyPoints,
+          numberOfTasks: sprintFields.includes(field) ? convertedResult.numberOfTasks : prev.numberOfTasks,
+          numberOfBugs: sprintFields.includes(field) ? convertedResult.numberOfBugs : prev.numberOfBugs
         };
         console.log('Updated session state:', updatedSession);
         return updatedSession;
       });
 
-      // Update editValues to match the new session data
+      // Update editValues to match the new session data while preserving sprint information
       setEditValues(prev => ({
         ...prev,
-        ...convertedResult
+        ...convertedResult,
+        // Preserve sprint information if not being updated
+        sprintName: sprintFields.includes(field) ? convertedResult.sprintName : prev.sprintName,
+        storyPoints: sprintFields.includes(field) ? convertedResult.storyPoints : prev.storyPoints,
+        numberOfTasks: sprintFields.includes(field) ? convertedResult.numberOfTasks : prev.numberOfTasks,
+        numberOfBugs: sprintFields.includes(field) ? convertedResult.numberOfBugs : prev.numberOfBugs
       }));
 
       setEditingFields(prev => {
