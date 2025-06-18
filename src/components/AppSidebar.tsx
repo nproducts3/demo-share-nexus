@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/use-auth';
 import { Calendar, Users, User, Home, BarChart3, Settings, PanelLeft, Bell, Key, ChevronDown, LogOut } from 'lucide-react';
@@ -25,6 +26,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { useNotifications } from '../contexts/NotificationsContext';
+import { SidebarCalendar } from './SidebarCalendar';
+import { DemoSession } from '../types/api';
 
 export const AppSidebar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -47,6 +50,12 @@ export const AppSidebar: React.FC = () => {
   ];
 
   const menuItems = user?.role === 'admin' ? adminMenuItems : employeeMenuItems;
+
+  const handleDateSelect = (date: Date, sessions: DemoSession[]) => {
+    console.log('Selected date:', date, 'Sessions:', sessions);
+    // Navigate to demo sessions page with date filter
+    navigate('/demo-sessions', { state: { selectedDate: date, sessions } });
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-slate-200/60 bg-white shadow-sm">
@@ -95,6 +104,7 @@ export const AppSidebar: React.FC = () => {
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
+          
           {/* Settings Dropdown */}
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -143,6 +153,11 @@ export const AppSidebar: React.FC = () => {
             )}
           </SidebarMenuItem>
         </SidebarMenu>
+
+        {/* Calendar Component */}
+        <div className="group-data-[collapsible=icon]:hidden border-t border-slate-200/60 mt-4">
+          <SidebarCalendar onDateSelect={handleDateSelect} />
+        </div>
 
         {/* Bottom Navigation Icons */}
         <div className="border-t border-slate-200/60 pt-2 mt-4">

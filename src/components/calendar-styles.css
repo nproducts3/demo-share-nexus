@@ -1,0 +1,83 @@
+
+/* Custom styles for react-big-calendar in sidebar */
+.rbc-calendar {
+  font-size: 11px;
+}
+
+.rbc-month-view {
+  border: none;
+}
+
+.rbc-header {
+  padding: 2px 4px;
+  font-weight: 500;
+  font-size: 10px;
+  color: #64748b;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.rbc-date-cell {
+  padding: 2px;
+  font-size: 10px;
+}
+
+.rbc-date-cell a {
+  color: #334155;
+  text-decoration: none;
+}
+
+.rbc-date-cell.rbc-off-range {
+  color: #94a3b8;
+}
+
+.rbc-today {
+  background-color: #dbeafe !important;
+}
+
+.rbc-selected {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+
+.rbc-event {
+  font-size: 9px;
+  padding: 1px 2px;
+  margin: 0 1px 1px 0;
+  border-radius: 2px;
+  border: none;
+}
+
+.rbc-month-row {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.rbc-day-bg {
+  border-right: 1px solid #e2e8f0;
+}
+
+.rbc-month-header {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.rbc-toolbar {
+  margin-bottom: 8px;
+}
+
+.rbc-toolbar button {
+  border: none;
+  background: none;
+  padding: 4px 8px;
+  margin: 0 2px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.rbc-toolbar button:hover {
+  background-color: #f1f5f9;
+}
+
+.rbc-toolbar button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #3b82f6;
+}
