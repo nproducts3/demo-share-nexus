@@ -38,6 +38,7 @@ export const AppSidebar: React.FC = () => {
 
   const adminMenuItems = [
     { icon: Home, label: 'Dashboard', href: '/' },
+    { icon: Calendar, label: 'Calendar', href: '/calendar' },
     { icon: Calendar, label: 'Demo Sessions', href: '/demo-sessions' },
     { icon: Users, label: 'User Management', href: '/user-management' },
     { icon: BarChart3, label: 'Analytics', href: '/analytics' },
@@ -45,6 +46,7 @@ export const AppSidebar: React.FC = () => {
 
   const employeeMenuItems = [
     { icon: Home, label: 'Dashboard', href: '/' },
+    { icon: Calendar, label: 'Calendar', href: '/calendar' },
     { icon: Calendar, label: 'My Sessions', href: '/my-sessions' },
     { icon: BarChart3, label: 'My Progress', href: '/my-progress' },
   ];
@@ -53,8 +55,8 @@ export const AppSidebar: React.FC = () => {
 
   const handleDateSelect = (date: Date, sessions: DemoSession[]) => {
     console.log('Selected date:', date, 'Sessions:', sessions);
-    // Navigate to demo sessions page with date filter
-    navigate('/demo-sessions', { state: { selectedDate: date, sessions } });
+    // Navigate to calendar page with date filter
+    navigate('/calendar', { state: { selectedDate: date, sessions } });
   };
 
   return (
