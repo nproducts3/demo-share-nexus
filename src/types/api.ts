@@ -15,6 +15,15 @@ export interface ApiErrorResponse {
   };
 }
 
+// Participant interface
+export interface Participant {
+  id: string;
+  email: string;
+  name: string;
+  role: 'host' | 'co-host' | 'attendee';
+  status?: 'invited' | 'accepted' | 'declined';
+}
+
 // Demo Session interface
 export interface DemoSession {
   id: string;
@@ -41,6 +50,9 @@ export interface DemoSession {
   rating?: number;
   createdAt?: string;
   updatedAt?: string;
+  participants?: Participant[];
+  meetingLink?: string;
+  recordingUrl?: string;
 }
 
 // User interface

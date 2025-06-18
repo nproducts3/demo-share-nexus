@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/use-auth';
 import { Calendar, Users, User, Home, BarChart3, Settings, PanelLeft, Bell, Key, ChevronDown } from 'lucide-react';
@@ -20,6 +21,7 @@ export const AppSidebar: React.FC = () => {
 
   const adminMenuItems = [
     { icon: Home, label: 'Dashboard', href: '/' },
+    { icon: Calendar, label: 'Calendar', href: '/calendar' },
     { icon: Calendar, label: 'Demo Sessions', href: '/demo-sessions' },
     { icon: Users, label: 'User Management', href: '/user-management' },
     { icon: BarChart3, label: 'Analytics', href: '/analytics' },
@@ -27,6 +29,7 @@ export const AppSidebar: React.FC = () => {
 
   const employeeMenuItems = [
     { icon: Home, label: 'Dashboard', href: '/' },
+    { icon: Calendar, label: 'Calendar', href: '/calendar' },
     { icon: Calendar, label: 'My Sessions', href: '/my-sessions' },
     { icon: BarChart3, label: 'My Progress', href: '/my-progress' },
   ];
