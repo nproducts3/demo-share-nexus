@@ -23,10 +23,14 @@ export const ParticipantManager: React.FC<ParticipantManagerProps> = ({
   participants,
   onParticipantsChange,
 }) => {
-  const [newParticipant, setNewParticipant] = useState({
+  const [newParticipant, setNewParticipant] = useState<{
+    email: string;
+    name: string;
+    role: 'host' | 'co-host' | 'attendee';
+  }>({
     email: '',
     name: '',
-    role: 'attendee' as const,
+    role: 'attendee',
   });
 
   const addParticipant = () => {
