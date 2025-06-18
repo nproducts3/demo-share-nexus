@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/use-auth';
-import { Calendar, Users, User, Home, BarChart3, Settings, PanelLeft, Bell, Key, ChevronDown } from 'lucide-react';
+import { Calendar, Users, User, Home, BarChart3, Settings, PanelLeft, Bell, Key, ChevronDown, LogOut } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Sidebar,
@@ -11,9 +11,24 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+} from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
+import { useNotifications } from '../contexts/NotificationsContext';
 
 export const AppSidebar: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { unreadCount } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -54,8 +69,8 @@ export const AppSidebar: React.FC = () => {
         </div>
       </SidebarHeader>
       
-      <SidebarContent className="p-2 bg-gradient-to-b from-white to-slate-50/30">
-        <SidebarMenu className="space-y-1">
+      <SidebarContent className="p-2 bg-gradient-to-b from-white to-slate-50/30 flex flex-col h-full">
+        <SidebarMenu className="space-y-1 flex-1">
           {menuItems.map((item, index) => (
             <SidebarMenuItem key={index}>
               <SidebarMenuButton
@@ -128,6 +143,82 @@ export const AppSidebar: React.FC = () => {
             )}
           </SidebarMenuItem>
         </SidebarMenu>
+
+        {/* Bottom Navigation Icons */}
+        <div className="border-t border-slate-200/60 pt-2 mt-4">
+          <div className="flex items-center justify-end space-x-0 px-2">
+            {/* Notifications */}
+            <SidebarMenuButton
+              onClick={() => navigate('/notifications')}
+              tooltip="Notifications"
+              className="relative h-12 w-12 rounded-full hover:bg-slate-100 transition-colors duration-200 flex flex-col items-center justify-center group-data-[collapsible=icon]:h-12 group-data-[collapsible=icon]:w-12"
+            >
+              <Bell className="h-7 w-7 text-slate-600 group-data-[collapsible=icon]:mb-0" />
+              {unreadCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-red-500 hover:bg-red-500 border border-white">
+                  {unreadCount}
+                </Badge>
+              )}
+            </SidebarMenuButton>
+
+            {/* User Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  tooltip="Profile"
+                  className="relative h-12 w-12 rounded-full hover:bg-slate-100 transition-colors duration-200 flex flex-col items-center justify-center group-data-[collapsible=icon]:h-12 group-data-[collapsible=icon]:w-12"
+                >
+                  <Avatar className="h-7 w-7 group-data-[collapsible=icon]:mb-0">
+                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xs">
+                      {user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                align="center" 
+                side="right"
+                className="w-56 bg-white border border-slate-200 shadow-lg"
+              >
+                <DropdownMenuLabel className="text-slate-900 font-semibold">My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-slate-200" />
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Settings className="mr-3 h-4 w-4 text-slate-500" />
+                    <span>Settings</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem onClick={() => navigate('/settings/profile')}>
+                      <User className="mr-3 h-4 w-4 text-slate-500" />
+                      <span>Profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/settings/team')}>
+                      <Users className="mr-3 h-4 w-4 text-slate-500" />
+                      <span>Team</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/settings/notifications')}>
+                      <Bell className="mr-3 h-4 w-4 text-slate-500" />
+                      <span>Notifications</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/settings/api-keys')}>
+                      <Key className="mr-3 h-4 w-4 text-slate-500" />
+                      <span>API Keys</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/settings/advanced')}>
+                      <Settings className="mr-3 h-4 w-4 text-slate-500" />
+                      <span>Advanced</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuSeparator className="bg-slate-200" />
+                <DropdownMenuItem onClick={logout} className="text-red-600 focus:text-red-600">
+                  <LogOut className="mr-3 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
       </SidebarContent>
     </Sidebar>
   );
