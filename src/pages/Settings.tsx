@@ -116,7 +116,7 @@ const Settings = () => {
   const [apiKeyForm, setApiKeyForm] = useState<Omit<SettingsApiKey, 'id'>>({ 
     name: '', 
     key: '', 
-    createdAt: '', 
+    created: '', 
     lastUsed: '' 
   });
 
@@ -209,7 +209,7 @@ const Settings = () => {
     setApiKeyForm({ 
       name: '', 
       key: '', 
-      createdAt: new Date().toISOString().split('T')[0], 
+      created: new Date().toISOString().split('T')[0], 
       lastUsed: new Date().toISOString().split('T')[0] 
     });
     setApiKeyModalOpen(true);
@@ -220,8 +220,8 @@ const Settings = () => {
     setApiKeyForm({ 
       name: apiKey.name,
       key: apiKey.key,
-      createdAt: apiKey.createdAt,
-      lastUsed: apiKey.lastUsed
+      created: apiKey.created || new Date().toISOString().split('T')[0],
+      lastUsed: apiKey.lastUsed || new Date().toISOString().split('T')[0]
     });
     setApiKeyModalOpen(true);
   };
@@ -764,7 +764,7 @@ const Settings = () => {
                     <div className="font-medium">{key.name}</div>
                     <div className="text-sm text-gray-500 font-mono">{key.key}</div>
                     <div className="text-xs text-gray-400">
-                      Created: {new Date(key.createdAt).toLocaleDateString()} •
+                      Created: {new Date(key.created).toLocaleDateString()} •
                       Last used: {new Date(key.lastUsed).toLocaleDateString()}
                     </div>
                   </div>
@@ -808,13 +808,14 @@ const Settings = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="createdAt">Created Date</Label>
+                    <Label htmlFor="created">Created Date</Label>
                     <Input
-                      id="createdAt"
-                      name="createdAt"
+                      id="created"
+                      name="created"
                       type="date"
-                      value={apiKeyForm.createdAt}
+                      value={apiKeyForm.created}
                       onChange={handleApiKeyFormChange}
+                      readOnly={!editingApiKey}
                     />
                   </div>
                   <div className="space-y-2">
@@ -825,6 +826,7 @@ const Settings = () => {
                       type="date"
                       value={apiKeyForm.lastUsed}
                       onChange={handleApiKeyFormChange}
+                      readOnly={!editingApiKey}
                     />
                   </div>
                 </div>

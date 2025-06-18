@@ -17,7 +17,6 @@ import Settings from './pages/Settings';
 import MySessions from './pages/MySessions';
 import MyProgress from './pages/MyProgress';
 import Notifications from './pages/Notifications';
-import Calendar from './pages/Calendar';
 import NotFound from './pages/NotFound';
 // Settings pages
 import ProfileSettings from './pages/settings/Profile';
@@ -53,7 +52,6 @@ function App() {
                     <Route path="/user-management" element={<UserManagement />} />
                     <Route path="/user-profile/:userId" element={<UserProfile />} />
                     <Route path="/analytics" element={<Analytics />} />
-                    <Route path="/calendar" element={<Calendar />} />
                     <Route path="/settings" element={<Settings />} />
                     <Route path="/settings/profile" element={<ProfileSettings />} />
                     <Route path="/settings/team" element={<TeamSettings />} />
