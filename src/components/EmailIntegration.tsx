@@ -86,18 +86,24 @@ Demo Tracker Team`
       const emails = sessionData.participants.map(p => p.email);
       
       // Replace template variables with actual string replacement
-      const personalizedEmails = sessionData.participants.map(participant => ({
-        to: participant.email,
-        subject: emailTemplate.subject
-          .replace('{{sessionTitle}}', sessionData.title),
-        body: emailTemplate.body
-          .replace('{{participantName}}', participant.name)
-          .replace('{{sessionTitle}}', sessionData.title)
-          .replace('{{sessionDate}}', sessionData.date)
-          .replace('{{sessionTime}}', sessionData.time)
-          .replace('{{sessionLocation}}', sessionData.location)
-          .replace('{{participantRole}}', participant.role)
-      }));
+      const personalizedEmails = sessionData.participants.map(participant => {
+        const personalizedSubject = emailTemplate.subject
+          .replace(/\{\{sessionTitle\}\}/g, sessionData.title);
+        
+        const personalizedBody = emailTemplate.body
+          .replace(/\{\{participantName\}\}/g, participant.name)
+          .replace(/\{\{sessionTitle\}\}/g, sessionData.title)
+          .replace(/\{\{sessionDate\}\}/g, sessionData.date)
+          .replace(/\{\{sessionTime\}\}/g, sessionData.time)
+          .replace(/\{\{sessionLocation\}\}/g, sessionData.location)
+          .replace(/\{\{participantRole\}\}/g, participant.role);
+
+        return {
+          to: participant.email,
+          subject: personalizedSubject,
+          body: personalizedBody
+        };
+      });
 
       console.log('Sending invitations:', personalizedEmails);
       
