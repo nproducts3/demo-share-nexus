@@ -116,7 +116,7 @@ const Settings = () => {
   const [apiKeyForm, setApiKeyForm] = useState<Omit<SettingsApiKey, 'id'>>({ 
     name: '', 
     key: '', 
-    created: '', 
+    createdAt: '', 
     lastUsed: '' 
   });
 
@@ -209,7 +209,7 @@ const Settings = () => {
     setApiKeyForm({ 
       name: '', 
       key: '', 
-      created: new Date().toISOString().split('T')[0], 
+      createdAt: new Date().toISOString().split('T')[0], 
       lastUsed: new Date().toISOString().split('T')[0] 
     });
     setApiKeyModalOpen(true);
@@ -220,7 +220,7 @@ const Settings = () => {
     setApiKeyForm({ 
       name: apiKey.name,
       key: apiKey.key,
-      created: apiKey.created || new Date().toISOString().split('T')[0],
+      createdAt: apiKey.createdAt || new Date().toISOString().split('T')[0],
       lastUsed: apiKey.lastUsed || new Date().toISOString().split('T')[0]
     });
     setApiKeyModalOpen(true);
@@ -764,8 +764,8 @@ const Settings = () => {
                     <div className="font-medium">{key.name}</div>
                     <div className="text-sm text-gray-500 font-mono">{key.key}</div>
                     <div className="text-xs text-gray-400">
-                      Created: {new Date(key.created).toLocaleDateString()} •
-                      Last used: {new Date(key.lastUsed).toLocaleDateString()}
+                      Created: {new Date(key.createdAt || '').toLocaleDateString()} •
+                      Last used: {new Date(key.lastUsed || '').toLocaleDateString()}
                     </div>
                   </div>
                   <div className="flex space-x-2">
@@ -808,12 +808,12 @@ const Settings = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="created">Created Date</Label>
+                    <Label htmlFor="createdAt">Created Date</Label>
                     <Input
-                      id="created"
-                      name="created"
+                      id="createdAt"
+                      name="createdAt"
                       type="date"
-                      value={apiKeyForm.created}
+                      value={apiKeyForm.createdAt}
                       onChange={handleApiKeyFormChange}
                       readOnly={!editingApiKey}
                     />

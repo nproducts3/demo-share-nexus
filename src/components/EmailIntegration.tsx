@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Mail, Send, Settings, Calendar, Clock, Users, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -84,7 +85,7 @@ Demo Tracker Team`
       // Simulate sending emails
       const emails = sessionData.participants.map(p => p.email);
       
-      // Replace template variables
+      // Replace template variables with actual string replacement
       const personalizedEmails = sessionData.participants.map(participant => ({
         to: participant.email,
         subject: emailTemplate.subject
@@ -363,3 +364,4 @@ Demo Tracker Team`
     </div>
   );
 };
+
