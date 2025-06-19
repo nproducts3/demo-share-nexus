@@ -1,5 +1,4 @@
 
-
 import React, { useState } from 'react';
 import { Mail, Send, Settings, Calendar, Clock, Users, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -241,7 +240,7 @@ Demo Tracker Team`
               placeholder="Enter your email template..."
             />
             <p className="text-sm text-slate-500 mt-2">
-              Available variables: {{participantName}}, {{sessionTitle}}, {{sessionDate}}, {{sessionTime}}, {{sessionLocation}}, {{participantRole}}
+              Available variables: {`{{participantName}}, {{sessionTitle}}, {{sessionDate}}, {{sessionTime}}, {{sessionLocation}}, {{participantRole}}`}
             </p>
           </div>
         </CardContent>
@@ -370,4 +369,3 @@ Demo Tracker Team`
     </div>
   );
 };
-
