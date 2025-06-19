@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Bell, Settings, LogOut, User, Search, Users, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -90,8 +91,8 @@ export const Header: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Side Actions */}
-        <div className="flex items-center space-x-3 ml-6">
+        {/* Right Side Actions - Moved to bottom right */}
+        <div className="fixed bottom-4 right-4 flex items-center space-x-3 bg-white/95 backdrop-blur border border-slate-200 rounded-lg p-2 shadow-lg">
           {/* Notifications */}
           <div className="relative">
             <Button
