@@ -1,7 +1,6 @@
-
 import React, { useState, useMemo } from 'react';
 import { Layout } from '../components/Layout';
-import { Calendar as BigCalendar, momentLocalizer, View } from 'react-big-calendar';
+import { Calendar as BigCalendar, momentLocalizer, View, Event } from 'react-big-calendar';
 import moment from 'moment';
 import { useQuery } from '@tanstack/react-query';
 import { sessionApi } from '../services/sessionApi';
@@ -11,15 +10,30 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Users, Clock, MapPin } from 'lucide-react';
 import { CreateSessionModal } from '../components/CreateSessionModal';
 import { useToast } from '@/hooks/use-toast';
+import { DemoSession } from '../types/api';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 const localizer = momentLocalizer(moment);
+
+interface CalendarEvent extends Event {
+  resource: DemoSession;
+}
+
+interface CustomToolbarProps {
+  label: string;
+  onNavigate: (action: 'PREV' | 'NEXT' | 'TODAY') => void;
+  onView: (view: string) => void;
+}
+
+interface CustomEventProps {
+  event: CalendarEvent;
+}
 
 const Calendar: React.FC = () => {
   const [view, setView] = useState<View>('month');
   const [date, setDate] = useState(new Date());
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const { toast } = useToast();
 
   const { data: sessions = [], isLoading, refetch } = useQuery({
@@ -27,7 +41,9 @@ const Calendar: React.FC = () => {
     queryFn: () => sessionApi.getAll(),
   });
 
-  const sessionsList = Array.isArray(sessions) ? sessions : sessions.data || [];
+  const sessionsList = useMemo(() => {
+    return Array.isArray(sessions) ? sessions : sessions.data || [];
+  }, [sessions]);
 
   const events = useMemo(() => {
     return sessionsList.map((session) => {
@@ -48,7 +64,7 @@ const Calendar: React.FC = () => {
     });
   }, [sessionsList]);
 
-  const handleCreateSession = async (sessionData: any) => {
+  const handleCreateSession = async (sessionData: Partial<DemoSession>) => {
     try {
       await sessionApi.create(sessionData);
       toast({
@@ -66,7 +82,7 @@ const Calendar: React.FC = () => {
     }
   };
 
-  const eventStyleGetter = (event: any) => {
+  const eventStyleGetter = (event: CalendarEvent) => {
     const session = event.resource;
     let backgroundColor = '#3174ad';
     
@@ -96,7 +112,7 @@ const Calendar: React.FC = () => {
     };
   };
 
-  const CustomToolbar = ({ label, onNavigate, onView }: any) => (
+  const CustomToolbar: React.FC<CustomToolbarProps> = ({ label, onNavigate, onView }) => (
     <div className="flex items-center justify-between mb-6 bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
       <div className="flex items-center space-x-4">
         <div className="flex items-center space-x-2">
@@ -149,7 +165,7 @@ const Calendar: React.FC = () => {
     </div>
   );
 
-  const CustomEvent = ({ event }: any) => {
+  const CustomEvent: React.FC<CustomEventProps> = ({ event }) => {
     const session = event.resource;
     return (
       <div className="p-1">

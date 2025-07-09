@@ -12,12 +12,23 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { Layout } from '../components/Layout';
-import { sessionApi, DemoSession } from '../services/api';
+import { sessionApi, DemoSession, User as UserType } from '../services/api';
 
 interface MySession extends DemoSession {
   rating?: number;
   feedback?: string;
 }
+
+// Helper function to safely extract createdBy name
+const getCreatedByName = (createdBy: string | UserType): string => {
+  if (typeof createdBy === 'string') {
+    return createdBy;
+  }
+  if (createdBy && typeof createdBy === 'object' && 'name' in createdBy) {
+    return createdBy.name;
+  }
+  return 'Unknown User';
+};
 
 const MySessions = () => {
   const navigate = useNavigate();
@@ -57,7 +68,7 @@ const MySessions = () => {
           allSessions = response.data;
         }
         // In a real app, you'd filter by current user's created sessions
-        const userSessions = allSessions.filter(session => session.createdBy === 'Current Admin');
+        const userSessions = allSessions.filter(session => getCreatedByName(session.createdBy) === 'Current Admin');
         setMySessions(userSessions);
       } catch (error) {
         console.error('Error fetching sessions:', error);
@@ -132,6 +143,7 @@ const MySessions = () => {
         date: newSession.date!,
         time: newSession.time!,
         description: newSession.description || '',
+        name: newSession.title!,
         attendees: 0,
         maxAttendees: newSession.maxAttendees || 10,
         status: 'upcoming',

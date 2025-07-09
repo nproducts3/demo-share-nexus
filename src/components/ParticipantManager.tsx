@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
-import { X, Plus, Mail, User, Shield, Users } from 'lucide-react';
+import { X, Plus, User, Shield, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import type { User as ApiUser } from '@/types/api';
 
 export interface Participant {
   id: string;
@@ -17,32 +16,33 @@ export interface Participant {
 interface ParticipantManagerProps {
   participants: Participant[];
   onParticipantsChange: (participants: Participant[]) => void;
+  availableUsers: ApiUser[];
 }
 
 export const ParticipantManager: React.FC<ParticipantManagerProps> = ({
   participants,
   onParticipantsChange,
+  availableUsers,
 }) => {
-  const [newParticipant, setNewParticipant] = useState<{
-    email: string;
-    name: string;
-    role: 'host' | 'co-host' | 'attendee';
-  }>({
-    email: '',
-    name: '',
-    role: 'attendee',
-  });
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [newParticipantRole, setNewParticipantRole] = useState<Participant['role']>('attendee');
 
   const addParticipant = () => {
-    if (!newParticipant.email || !newParticipant.name) return;
+    if (!selectedUserId) return;
 
-    const participant: Participant = {
-      id: Date.now().toString(),
-      ...newParticipant,
-    };
+    const userToAdd = availableUsers.find(u => u.id === selectedUserId);
 
-    onParticipantsChange([...participants, participant]);
-    setNewParticipant({ email: '', name: '', role: 'attendee' });
+    if (userToAdd && !participants.some(p => p.id === userToAdd.id)) {
+      const newParticipant: Participant = {
+        id: userToAdd.id,
+        name: userToAdd.name,
+        email: userToAdd.email,
+        role: newParticipantRole,
+      };
+      onParticipantsChange([...participants, newParticipant]);
+      setSelectedUserId(null); // Reset selection
+      setNewParticipantRole('attendee'); // Reset role
+    }
   };
 
   const removeParticipant = (id: string) => {
@@ -73,43 +73,31 @@ export const ParticipantManager: React.FC<ParticipantManagerProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center mb-3">
-        <Users className="h-5 w-5 mr-2 text-gray-600" />
-        <h3 className="text-lg font-medium">Participants</h3>
-      </div>
-
       {/* Add New Participant */}
       <div className="space-y-3 p-4 bg-slate-50 rounded-lg">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <Label htmlFor="participant-name">Name</Label>
-            <Input
-              id="participant-name"
-              type="text"
-              value={newParticipant.name}
-              onChange={(e) => setNewParticipant(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Enter participant name"
-            />
-          </div>
-          <div>
-            <Label htmlFor="participant-email">Email</Label>
-            <Input
-              id="participant-email"
-              type="email"
-              value={newParticipant.email}
-              onChange={(e) => setNewParticipant(prev => ({ ...prev, email: e.target.value }))}
-              placeholder="Enter email address"
-            />
-          </div>
+        <div className="md:col-span-2">
+            <Label htmlFor="participant-select">Participant</Label>
+            <Select value={selectedUserId ?? ''} onValueChange={setSelectedUserId}>
+                <SelectTrigger id="participant-select">
+                    <SelectValue placeholder="Select a user to add" />
+                </SelectTrigger>
+                <SelectContent>
+                    {availableUsers.map(user => (
+                        <SelectItem key={user.id} value={user.id} disabled={participants.some(p => p.id === user.id)}>
+                            {user.name} ({user.email})
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
         </div>
         
         <div className="flex items-center space-x-3">
           <div className="flex-1">
             <Label htmlFor="participant-role">Role</Label>
             <Select 
-              value={newParticipant.role} 
+              value={newParticipantRole} 
               onValueChange={(role: 'host' | 'co-host' | 'attendee') => 
-                setNewParticipant(prev => ({ ...prev, role }))
+                setNewParticipantRole(role)
               }
             >
               <SelectTrigger>
@@ -126,7 +114,7 @@ export const ParticipantManager: React.FC<ParticipantManagerProps> = ({
             type="button"
             onClick={addParticipant}
             className="mt-6 bg-blue-600 hover:bg-blue-700"
-            disabled={!newParticipant.email || !newParticipant.name}
+            disabled={!selectedUserId}
           >
             <Plus className="h-4 w-4 mr-2" />
             Add
@@ -154,10 +142,7 @@ export const ParticipantManager: React.FC<ParticipantManagerProps> = ({
                   </div>
                   <div>
                     <p className="font-medium text-slate-900">{participant.name}</p>
-                    <div className="flex items-center space-x-2">
-                      <Mail className="h-3 w-3 text-slate-400" />
-                      <p className="text-sm text-slate-600">{participant.email}</p>
-                    </div>
+                    <p className="text-sm text-slate-600">{participant.email}</p>
                   </div>
                 </div>
                 
@@ -168,7 +153,7 @@ export const ParticipantManager: React.FC<ParticipantManagerProps> = ({
                       updateParticipantRole(participant.id, role)
                     }
                   >
-                    <SelectTrigger className="w-24">
+                    <SelectTrigger className="w-32">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

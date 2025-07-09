@@ -6,31 +6,18 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { DemoSession, User as UserType } from '../types/api';
 
-interface DemoSession {
-  id: string;
-  title: string;
-  technology: string;
-  date: string;
-  time: string;
-  description: string;
-  createdBy: string;
-  attendees: number;
-  status: 'upcoming' | 'completed' | 'cancelled';
-  location: string;
-  maxAttendees: number;
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
-  type: 'PROJECT_BASED' | 'PRODUCT_BASED';
-  prerequisites?: string;
-  duration?: number;
-  feedback?: string;
-  numberOfBugs?: number;
-  numberOfTasks?: number;
-  storyPoints?: number;
-  sprintName?: string;
-  rating?: number;
-  currentStatus?: string;
-}
+// Helper function to safely extract createdBy name
+const getCreatedByName = (createdBy: string | UserType): string => {
+  if (typeof createdBy === 'string') {
+    return createdBy;
+  }
+  if (createdBy && typeof createdBy === 'object' && 'name' in createdBy) {
+    return createdBy.name;
+  }
+  return 'Unknown User';
+};
 
 interface EditSessionModalProps {
   open: boolean;
@@ -82,7 +69,7 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
     prerequisites: session?.prerequisites || '',
     duration: session?.duration?.toString() || '',
     feedback: session?.feedback || '',
-    createdBy: session?.createdBy || '',
+    createdBy: getCreatedByName(session?.createdBy) || '',
     numberOfBugs: session?.numberOfBugs?.toString() || '',
     numberOfTasks: session?.numberOfTasks?.toString() || '',
     storyPoints: session?.storyPoints?.toString() || '',
@@ -109,7 +96,7 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
         prerequisites: session.prerequisites || '',
         duration: session.duration?.toString() || '',
         feedback: session.feedback || '',
-        createdBy: session.createdBy || '',
+        createdBy: getCreatedByName(session.createdBy) || '',
         numberOfBugs: session.numberOfBugs?.toString() || '',
         numberOfTasks: session.numberOfTasks?.toString() || '',
         storyPoints: session.storyPoints?.toString() || '',

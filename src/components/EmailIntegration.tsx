@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Mail, Send, Settings, Calendar, Clock, Users, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,16 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 
-interface EmailSettings {
-  provider: 'gmail' | 'outlook' | 'smtp';
-  smtpHost?: string;
-  smtpPort?: string;
-  username?: string;
-  password?: string;
-  fromEmail?: string;
-  fromName?: string;
-}
-
 interface EmailNotificationProps {
   sessionData?: {
     title: string;
@@ -30,45 +19,62 @@ interface EmailNotificationProps {
     participants: Array<{ email: string; name: string; role: string }>;
   };
   onSendInvitations?: (emails: string[]) => void;
+  onCreateAndSendSession?: () => Promise<void>;
+  formData?: {
+    emailProvider: string;
+    fromEmail: string;
+    fromName: string;
+    emailSubject: string;
+    emailBody: string;
+    sendInvitations: boolean;
+    sendReminders: boolean;
+    sendRecordings: boolean;
+    reminderTime: string;
+  };
+  onInputChange?: (field: string, value: string) => void;
+  errors?: Record<string, string>;
 }
+
+// Utility function to replace email template placeholders
+const processEmailTemplate = (
+  template: string, 
+  sessionData: { title: string; date: string; time: string; location: string }, 
+  participantData?: { name: string; role: string }
+) => {
+  let processedTemplate = template;
+  
+  // Replace session-related placeholders
+  processedTemplate = processedTemplate.replace(/\{\{sessionTitle\}\}/g, sessionData.title || '');
+  processedTemplate = processedTemplate.replace(/\{\{sessionDate\}\}/g, sessionData.date || '');
+  processedTemplate = processedTemplate.replace(/\{\{sessionTime\}\}/g, sessionData.time || '');
+  processedTemplate = processedTemplate.replace(/\{\{sessionLocation\}\}/g, sessionData.location || '');
+  
+  // Replace participant-related placeholders if participant data is provided
+  if (participantData) {
+    processedTemplate = processedTemplate.replace(/\{\{participantName\}\}/g, participantData.name || '');
+    
+    // Convert role enum to readable text
+    const roleText = participantData.role === 'HOST' ? 'Host' : 
+                    participantData.role === 'CO_HOST' ? 'Co-Host' : 
+                    participantData.role === 'ATTENDEE' ? 'Attendee' : 
+                    participantData.role;
+    
+    processedTemplate = processedTemplate.replace(/\{\{participantRole\}\}/g, roleText);
+  }
+  
+  return processedTemplate;
+};
 
 export const EmailIntegration: React.FC<EmailNotificationProps> = ({
   sessionData,
-  onSendInvitations
+  onSendInvitations,
+  onCreateAndSendSession,
+  formData,
+  onInputChange,
+  errors
 }) => {
-  const [emailSettings, setEmailSettings] = useState<EmailSettings>({
-    provider: 'gmail',
-    fromEmail: '',
-    fromName: 'Demo Tracker',
-  });
-  
-  const [emailTemplate, setEmailTemplate] = useState({
-    subject: 'You\'re invited to a demo session: {{sessionTitle}}',
-    body: `Hi {{participantName}},
-
-You've been invited to join a demo session!
-
-📅 Session Details:
-• Title: {{sessionTitle}}
-• Date: {{sessionDate}}
-• Time: {{sessionTime}}
-• Location: {{sessionLocation}}
-• Your Role: {{participantRole}}
-
-Please mark your calendar and join us for this exciting session.
-
-Best regards,
-Demo Tracker Team`
-  });
-
-  const [notifications, setNotifications] = useState({
-    sendInvitations: true,
-    sendReminders: true,
-    sendRecordings: true,
-    reminderTime: '24', // hours before
-  });
-
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSendInvitations = async () => {
     if (!sessionData || !sessionData.participants.length) {
@@ -80,29 +86,31 @@ Demo Tracker Team`
       return;
     }
 
+    setIsLoading(true);
+
     try {
-      // Simulate sending emails
+      // If we have a callback to create and send the session, use it
+      if (onCreateAndSendSession) {
+        await onCreateAndSendSession();
+        return;
+      }
+
+      // Fallback to the old behavior for backward compatibility
       const emails = sessionData.participants.map(p => p.email);
       
-      // Replace template variables with actual string replacement
-      const personalizedEmails = sessionData.participants.map(participant => {
-        const personalizedSubject = emailTemplate.subject
-          .replace(/\{\{sessionTitle\}\}/g, sessionData.title);
-        
-        const personalizedBody = emailTemplate.body
-          .replace(/\{\{participantName\}\}/g, participant.name)
-          .replace(/\{\{sessionTitle\}\}/g, sessionData.title)
-          .replace(/\{\{sessionDate\}\}/g, sessionData.date)
-          .replace(/\{\{sessionTime\}\}/g, sessionData.time)
-          .replace(/\{\{sessionLocation\}\}/g, sessionData.location)
-          .replace(/\{\{participantRole\}\}/g, participant.role);
-
-        return {
-          to: participant.email,
-          subject: personalizedSubject,
-          body: personalizedBody
-        };
-      });
+      // Replace template variables
+      const personalizedEmails = sessionData.participants.map(participant => ({
+        to: participant.email,
+        subject: formData?.emailSubject || 'You\'re invited to a demo session: {{sessionTitle}}'
+          .replace('{{sessionTitle}}', sessionData.title),
+        body: formData?.emailBody || 'Hi {{participantName}},\n\nYou\'ve been invited to join a demo session!\n\n📅 Session Details:\n• Title: {{sessionTitle}}\n• Date: {{sessionDate}}\n• Time: {{sessionTime}}\n• Location: {{sessionLocation}}\n• Your Role: {{participantRole}}\n\nPlease mark your calendar and join us for this exciting session.\n\nBest regards,\nDemo Tracker Team'
+          .replace('{{participantName}}', participant.name)
+          .replace('{{sessionTitle}}', sessionData.title)
+          .replace('{{sessionDate}}', sessionData.date)
+          .replace('{{sessionTime}}', sessionData.time)
+          .replace('{{sessionLocation}}', sessionData.location)
+          .replace('{{participantRole}}', participant.role)
+      }));
 
       console.log('Sending invitations:', personalizedEmails);
       
@@ -121,131 +129,13 @@ Demo Tracker Team`
         description: "Failed to send invitations. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Email Provider Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Settings className="h-5 w-5 mr-2" />
-            Email Provider Settings
-          </CardTitle>
-          <CardDescription>
-            Configure your email provider for sending notifications
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="email-provider">Email Provider</Label>
-            <Select 
-              value={emailSettings.provider} 
-              onValueChange={(value: 'gmail' | 'outlook' | 'smtp') => 
-                setEmailSettings(prev => ({ ...prev, provider: value }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="gmail">Gmail</SelectItem>
-                <SelectItem value="outlook">Outlook</SelectItem>
-                <SelectItem value="smtp">Custom SMTP</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="from-email">From Email</Label>
-              <Input
-                id="from-email"
-                type="email"
-                value={emailSettings.fromEmail}
-                onChange={(e) => setEmailSettings(prev => ({ ...prev, fromEmail: e.target.value }))}
-                placeholder="demo@company.com"
-              />
-            </div>
-            <div>
-              <Label htmlFor="from-name">From Name</Label>
-              <Input
-                id="from-name"
-                type="text"
-                value={emailSettings.fromName}
-                onChange={(e) => setEmailSettings(prev => ({ ...prev, fromName: e.target.value }))}
-                placeholder="Demo Tracker"
-              />
-            </div>
-          </div>
-
-          {emailSettings.provider === 'smtp' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="smtp-host">SMTP Host</Label>
-                <Input
-                  id="smtp-host"
-                  type="text"
-                  value={emailSettings.smtpHost || ''}
-                  onChange={(e) => setEmailSettings(prev => ({ ...prev, smtpHost: e.target.value }))}
-                  placeholder="smtp.gmail.com"
-                />
-              </div>
-              <div>
-                <Label htmlFor="smtp-port">SMTP Port</Label>
-                <Input
-                  id="smtp-port"
-                  type="text"
-                  value={emailSettings.smtpPort || ''}
-                  onChange={(e) => setEmailSettings(prev => ({ ...prev, smtpPort: e.target.value }))}
-                  placeholder="587"
-                />
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Email Template */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Mail className="h-5 w-5 mr-2" />
-            Email Template
-          </CardTitle>
-          <CardDescription>
-            Customize the invitation email template
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="email-subject">Subject Line</Label>
-            <Input
-              id="email-subject"
-              type="text"
-              value={emailTemplate.subject}
-              onChange={(e) => setEmailTemplate(prev => ({ ...prev, subject: e.target.value }))}
-              placeholder="You're invited to a demo session"
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="email-body">Email Body</Label>
-            <Textarea
-              id="email-body"
-              value={emailTemplate.body}
-              onChange={(e) => setEmailTemplate(prev => ({ ...prev, body: e.target.value }))}
-              rows={10}
-              placeholder="Enter your email template..."
-            />
-            <p className="text-sm text-slate-500 mt-2">
-              Available variables: {`{{participantName}}, {{sessionTitle}}, {{sessionDate}}, {{sessionTime}}, {{sessionLocation}}, {{participantRole}}`}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Notification Settings */}
       <Card>
         <CardHeader>
@@ -264,8 +154,8 @@ Demo Tracker Team`
               <p className="text-sm text-slate-500">Send email invitations when creating sessions</p>
             </div>
             <Switch
-              checked={notifications.sendInvitations}
-              onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, sendInvitations: checked }))}
+              checked={formData?.sendInvitations || false}
+              onCheckedChange={(checked) => onInputChange?.('sendInvitations', checked.toString())}
             />
           </div>
 
@@ -275,8 +165,8 @@ Demo Tracker Team`
               <p className="text-sm text-slate-500">Send reminder emails before sessions</p>
             </div>
             <Switch
-              checked={notifications.sendReminders}
-              onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, sendReminders: checked }))}
+              checked={formData?.sendReminders || false}
+              onCheckedChange={(checked) => onInputChange?.('sendReminders', checked.toString())}
             />
           </div>
 
@@ -286,26 +176,26 @@ Demo Tracker Team`
               <p className="text-sm text-slate-500">Send recording links after sessions</p>
             </div>
             <Switch
-              checked={notifications.sendRecordings}
-              onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, sendRecordings: checked }))}
+              checked={formData?.sendRecordings || false}
+              onCheckedChange={(checked) => onInputChange?.('sendRecordings', checked.toString())}
             />
           </div>
 
-          {notifications.sendReminders && (
+          {formData?.sendReminders && (
             <div>
               <Label htmlFor="reminder-time">Reminder Time</Label>
               <Select 
-                value={notifications.reminderTime} 
-                onValueChange={(value) => setNotifications(prev => ({ ...prev, reminderTime: value }))}
+                value={formData.reminderTime} 
+                onValueChange={(value) => onInputChange?.('reminderTime', value)}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">1 hour before</SelectItem>
-                  <SelectItem value="24">24 hours before</SelectItem>
-                  <SelectItem value="48">48 hours before</SelectItem>
-                  <SelectItem value="168">1 week before</SelectItem>
+                  <SelectItem value="ONE_HOUR">1 hour before</SelectItem>
+                  <SelectItem value="TWENTY_FOUR_HOURS">24 hours before</SelectItem>
+                  <SelectItem value="FORTY_EIGHT_HOURS">48 hours before</SelectItem>
+                  <SelectItem value="ONE_WEEK">1 week before</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -358,9 +248,9 @@ Demo Tracker Team`
                 ))}
               </div>
 
-              <Button onClick={handleSendInvitations} className="w-full">
+              <Button onClick={handleSendInvitations} className="w-full" disabled={isLoading}>
                 <Send className="h-4 w-4 mr-2" />
-                Send Invitations to All Participants
+                {isLoading ? 'Creating Session...' : 'Create Session & Send Invitations'}
               </Button>
             </div>
           </CardContent>

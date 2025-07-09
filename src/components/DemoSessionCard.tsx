@@ -1,21 +1,9 @@
-
 import React from 'react';
 import { Calendar, Clock, Users, Edit, Trash, User } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-
-interface DemoSession {
-  id: string;
-  title: string;
-  technology: string;
-  date: string;
-  time: string;
-  description: string;
-  createdBy: string;
-  attendees: number;
-  status: 'upcoming' | 'completed' | 'cancelled';
-}
+import { DemoSession, User as UserType } from '../types/api';
 
 interface DemoSessionCardProps {
   session: DemoSession;
@@ -23,6 +11,17 @@ interface DemoSessionCardProps {
   onDelete?: (sessionId: string) => void;
   isAdmin?: boolean;
 }
+
+// Helper function to safely extract createdBy name
+const getCreatedByName = (createdBy: string | UserType): string => {
+  if (typeof createdBy === 'string') {
+    return createdBy;
+  }
+  if (createdBy && typeof createdBy === 'object' && 'name' in createdBy) {
+    return createdBy.name;
+  }
+  return 'Unknown User';
+};
 
 export const DemoSessionCard: React.FC<DemoSessionCardProps> = ({
   session,
@@ -119,7 +118,7 @@ export const DemoSessionCard: React.FC<DemoSessionCardProps> = ({
           
           <div className="flex items-center space-x-2 text-xs text-gray-500 pt-2 border-t">
             <User className="h-3 w-3" />
-            <span>Created by {session.createdBy}</span>
+            <span>Created by {getCreatedByName(session.createdBy)}</span>
           </div>
         </div>
       </CardContent>

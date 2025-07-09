@@ -89,6 +89,17 @@ const DemoSessions = () => {
   // Fetch sessions on component mount and page change
   useEffect(() => {
     fetchSessions(currentPage);
+    
+    // Test: Fetch available users to see what IDs exist
+    const testUsers = async () => {
+      try {
+        const users = await sessionApi.getUsers();
+        console.log('Available users:', users);
+      } catch (error) {
+        console.log('Could not fetch users:', error);
+      }
+    };
+    testUsers();
   }, [currentPage]);
 
   const handlePageChange = (page: number) => {
@@ -257,19 +268,42 @@ const DemoSessions = () => {
     attendees: number;
     difficulty: string;
     prerequisites: string;
-    duration: string;
+    duration: number;
     createdBy: string;
+    name: string[];
+    type: string;
+    role: string;
     status: string;
+    emailProvider: string;
+    fromEmail: string;
+    fromName: string;
+    emailSubject: string;
+    emailBody: string;
+    sendInvitations: boolean;
+    sendReminders: boolean;
+    sendRecordings: boolean;
+    reminderTime: string;
+    userIds: string[];
   }) => {
     setLoading(true);
     try {
-      const newSession = await sessionApi.create({
+      console.log('=== DEMO SESSIONS DEBUG ===');
+      console.log('Received session data:', sessionData);
+      
+      const apiData = {
         ...sessionData,
-        type: 'PROJECT_BASED' as const,
-        duration: parseInt(sessionData.duration) || 0,
+        type: sessionData.type as 'PROJECT_BASED' | 'PRODUCT_BASED',
         difficulty: sessionData.difficulty as 'Beginner' | 'Intermediate' | 'Advanced',
-        status: sessionData.status as 'upcoming' | 'completed' | 'cancelled'
-      });
+        status: sessionData.status as 'upcoming' | 'completed' | 'cancelled',
+        role: sessionData.role as 'HOST' | 'CO_HOST' | 'ATTENDEE',
+        emailProvider: sessionData.emailProvider as 'GMAIL' | 'OUTLOOK' | 'SMTP'
+      };
+      
+      console.log('Data being sent to API:', apiData);
+      
+      const newSession = await sessionApi.create(apiData);
+      console.log('API response:', newSession);
+      
       setDemoSessions(prev => [newSession, ...prev]);
       setIsCreateModalOpen(false);
       toast({

@@ -1,5 +1,5 @@
 import { BASE_URL } from './apiConfig';
-import { DemoSession, ApiError, ApiErrorResponse } from '../types/api';
+import { DemoSession, ApiError, ApiErrorResponse, User } from '../types/api';
 
 interface PaginatedResponse<T> {
   data: T[];
@@ -42,32 +42,39 @@ export const sessionApi = {
 
   // Create new session
   create: async (sessionData: Omit<DemoSession, 'id'>): Promise<DemoSession> => {
-    // Get all existing sessions to determine the next ID
-    const existingSessions = await sessionApi.getAll();
-    const sessions = Array.isArray(existingSessions) ? existingSessions : existingSessions.data;
-    
-    // Find the highest ID and increment it
-    const highestId = sessions.reduce((max, session) => {
-      const currentId = parseInt(session.id);
-      return currentId > max ? currentId : max;
-    }, 0);
-    
-    const newId = (highestId + 1).toString();
+    console.log('=== CREATE SESSION DEBUG ===');
+    console.log('Session data being sent:', JSON.stringify(sessionData, null, 2));
     
     const response = await fetch(`${BASE_URL}/api/sessions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        ...sessionData,
-        id: newId
-      }),
+      body: JSON.stringify(sessionData),
     });
+    
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+    
     if (!response.ok) {
-      throw new Error('Failed to create session');
+      const errorText = await response.text();
+      console.error('Error response body:', errorText);
+      
+      let errorMessage = 'Failed to create session';
+      try {
+        const errorData = JSON.parse(errorText);
+        console.error('Parsed error data:', errorData);
+        errorMessage = errorData.message || errorData.error || errorMessage;
+      } catch (e) {
+        console.error('Could not parse error response as JSON');
+      }
+      
+      throw new Error(errorMessage);
     }
-    return response.json();
+    
+    const responseData = await response.json();
+    console.log('Success response:', responseData);
+    return responseData;
   },
 
   // Update session by ID
@@ -196,5 +203,18 @@ export const sessionApi = {
     if (!response.ok) {
       throw new Error('Failed to delete session');
     }
+  },
+
+  // Fetch available users (if this endpoint exists)
+  getUsers: async (): Promise<User[]> => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/users`);
+      if (response.ok) {
+        return response.json();
+      }
+    } catch (error) {
+      console.log('Users endpoint not available or failed');
+    }
+    return [];
   },
 };

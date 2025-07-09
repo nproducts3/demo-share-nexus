@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Edit, Save, X, Loader2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Layout } from '../components/Layout';
-import { sessionApi, type DemoSession } from '../services/api';
+import { sessionApi, type DemoSession, User as UserType } from '../services/api';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -16,6 +16,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 interface ExtendedDemoSession extends DemoSession {
   currentStatus?: 'Planning' | 'In Progress' | 'Testing' | 'Completed' | 'On Hold';
 }
+
+// Helper function to safely extract createdBy name
+const getCreatedByName = (createdBy: string | UserType): string => {
+  if (typeof createdBy === 'string') {
+    return createdBy;
+  }
+  if (createdBy && typeof createdBy === 'object' && 'name' in createdBy) {
+    return createdBy.name;
+  }
+  return 'Unknown User';
+};
 
 const SessionDetail = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -391,7 +402,7 @@ const SessionDetail = () => {
                 <div className="text-gray-500 font-medium">Current Status</div>
                 {editingFields['currentStatus'] ? (
                   <div className="flex items-center space-x-2 mt-1">
-                    <Select value={editValues.currentStatus || ''} onValueChange={value => setEditValues(prev => ({ ...prev, currentStatus: value as any }))}>
+                    <Select value={editValues.currentStatus || ''} onValueChange={value => setEditValues(prev => ({ ...prev, currentStatus: value as 'Planning' | 'In Progress' | 'Testing' | 'Completed' | 'On Hold' }))}>
                       <SelectTrigger className="w-[140px]">
                         <SelectValue placeholder={editValues.currentStatus || 'Select status'} />
                       </SelectTrigger>
@@ -520,7 +531,7 @@ const SessionDetail = () => {
                   </div>
                 ) : (
                   <div className="flex items-center mt-1">
-                    <span>{session.createdBy || '-'}</span>
+                    <span>{getCreatedByName(session.createdBy) || '-'}</span>
                     <Button variant="ghost" size="sm" className="ml-2" onClick={() => handleEdit('createdBy')}><Edit className="h-4 w-4" /></Button>
                   </div>
                 )}

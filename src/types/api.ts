@@ -1,4 +1,3 @@
-
 // API Error interfaces
 export interface ApiError extends Error {
   status?: number;
@@ -24,6 +23,24 @@ export interface Participant {
   status?: 'invited' | 'accepted' | 'declined';
 }
 
+// User interface
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  department: string;
+  phone?: string;
+  skillLevel: string;
+  joinDate: string;
+  lastLogin: string;
+  sessionsAttended: number;
+  sessionsCreated: number;
+  totalHours: number;
+  avatar?: string;
+}
+
 // Demo Session interface
 export interface DemoSession {
   id: string;
@@ -32,7 +49,8 @@ export interface DemoSession {
   date: string;
   time: string;
   description: string;
-  createdBy: string;
+  name: string | User | string[];
+  createdBy: string | User;
   attendees: number;
   maxAttendees: number;
   status: 'upcoming' | 'completed' | 'cancelled';
@@ -50,25 +68,22 @@ export interface DemoSession {
   rating?: number;
   createdAt?: string;
   updatedAt?: string;
-  participants?: Participant[];
+  participants?: Participant[] | Array<{
+    name: string;
+    email: string;
+    role: 'HOST' | 'CO_HOST' | 'ATTENDEE';
+  }>;
   meetingLink?: string;
   recordingUrl?: string;
-}
-
-// User interface
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  status: string;
-  department: string;
-  phone?: string;
-  skillLevel: string;
-  joinDate: string;
-  lastLogin: string;
-  sessionsAttended: number;
-  sessionsCreated: number;
-  totalHours: number;
-  avatar?: string;
+  emailProvider?: 'GMAIL' | 'OUTLOOK' | 'SMTP';
+  fromEmail?: string;
+  fromName?: string;
+  emailSubject?: string;
+  emailBody?: string;
+  sendInvitations?: boolean;
+  sendReminders?: boolean;
+  sendRecordings?: boolean;
+  reminderTime?: string;
+  userIds?: string[];
+  role?: 'HOST' | 'CO_HOST' | 'ATTENDEE';
 }
